@@ -12,7 +12,6 @@
 ## 准备工作
 
 ### 配置环境
-
 - 安装 [Python](https://python.org)
 - 安装 CUDA/ROCm 和对应版本的 PyTorch
 - 安装依赖库 ```pip install -r requirements.txt```
