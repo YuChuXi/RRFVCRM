@@ -11,7 +11,7 @@
 
 ## 准备工作
 
-### 检查环境
+### 配置环境
 
 - 安装 [Python](https://python.org)
 - 安装 CUDA/ROCm 和对应版本的 PyTorch
