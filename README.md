@@ -33,10 +33,18 @@
 ## 项目结构
 
 ## 训练
+- 训练需要[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace/releases)提取人脸特征，完成安装后在 ```config/openseeface.json``` 中配置路径即可
+- 自动语音标注
 
 ### 准备数据
+你可以自己准备数据，也可以参考以下的数据集
+- 语音、文字 [Mozilla Common Voice](https://commonvoice.mozilla.org/zh-CN)
+- 语音、面部 [CelebV-Text](https://github.com/celebv-text/CelebV-Text)
 
 ### 数据预处理
+- 视频或音频分片（默认25FPS * 40s 一片，对应非语言模型的 25FPS * 1024CTX） ```python ```
+- 提取 hubert 和 f0 ```python ```
+- 提取视频的人脸特征 ```python ```
 
 ### 训练 T2F0
 
@@ -45,9 +53,17 @@
 ### 拓展
 
 ## 遇到问题?
+- parselmouth 安装失败: 暂时将 ```setuptools``` 降级至 58.0 以下
 
 ## 其他
 
 ### 未来方向
 
 ### 致谢
+- [RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
+- [SoftVC VITS 歌声转换](https://github.com/justinjohn0306/so-vits-svc-4.0/tree/4.0-v2)
+- [GPT-SoVITS-WebUI](https://github.com/RVC-Boss/GPT-SoVITS)
+- [RMVPE](https://github.com/Dream-High/RMVPE)
+- [Retrieval-based-Voice-Conversion-WebUI](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
+- [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)
+- [AMD](https://amd.com) 的计算卡
