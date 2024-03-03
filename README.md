@@ -22,6 +22,9 @@
 - Bert [s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/)
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/)
 
+### 检验
+- 执行 ```python  models/language_test.py``` 若可正常交互则说明准备工作无误
+
 ## 快速开始
 - 下载示例模型 [啥都没有](https://nothing)
 - 下载训练有素的VC模型 [啥都没有](https://nothing)
