@@ -18,9 +18,10 @@
 
 ### 下载预训练权重
 预训练权重存放于 ```weigths/pretrained/```
-- RWKV-LM [RWKV-x060-World-1B6-v2-20240208-ctx4096.pth](https://huggingface.co/BlinkDL/rwkv-6-world/resolve/main/)
-- Bert [s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/)
-- RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/)
+- RWKV-LM [RWKV-x060-World-1B6-v2-20240208-ctx4096.pth](https://huggingface.co/BlinkDL/rwkv-6-world/resolve/main/RWKV-x060-World-1B6-v2-20240208-ctx4096.pth)
+- Bert [s1bert.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt)
+- HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
+- RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
 
 ### 检验
 - 执行 ```python  models/language_test.py``` 若可正常交互则说明准备工作无误
@@ -33,8 +34,8 @@
 ## 项目结构
 
 ## 训练
-- 训练需要[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace/releases)提取人脸特征，完成安装后在 ```config/openseeface.json``` 中配置路径即可
-- 自动语音标注
+- 训练需要 [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace/releases) 提取人脸特征，完成安装后在 ```config/openseeface.json``` 中配置路径即可
+- 对于某些数据集可能需要自动语音标注 [DeepSpeech]](https://github.com/mozilla/DeepSpeech)
 
 ### 准备数据
 你可以自己准备数据，也可以参考以下的数据集
@@ -66,4 +67,7 @@
 - [RMVPE](https://github.com/Dream-High/RMVPE)
 - [Retrieval-based-Voice-Conversion-WebUI](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
 - [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)
+- [DeepSpeech](https://github.com/mozilla/DeepSpeech)
+- [Mozilla Common Voice](https://commonvoice.mozilla.org/zh-CN)
+- [CelebV-Text](https://github.com/celebv-text/CelebV-Text)
 - [AMD](https://amd.com) 的计算卡
