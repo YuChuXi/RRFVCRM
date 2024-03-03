@@ -1,8 +1,8 @@
-# RRFVCRM  
-一个以 RWKV 模型架构为基础的语音、动作生成AI
+#
+![RRFVCM](assets/logo.png)
 
 ## 前言
-
+一个以 RWKV 模型架构为基础的语音、动作生成AI
 ### 初衷
 
 ### 约定
