@@ -39,21 +39,22 @@ from torch.utils.cpp_extension import load
 
 HEAD_SIZE = int(os.environ["RWKV_HEAD_SIZE_A"])
 
-wkv6_cuda = load(
-    name="wkv6",
-    sources=["cuda/wkv6_op.cpp", f"cuda/wkv6_cuda.cu"],
-    verbose=True,
-    extra_cuda_cflags=[
-        "-res-usage",
-        "--use_fast_math",
-        "-O3",
-        "-Xptxas -O3",
-        "--extra-device-vectorization",
-        f"-D_N_={HEAD_SIZE}",
-        f"-D_T_={int(os.environ['RWKV_CTXLEN'])}",
-    ],
-)
+
 if torch.cuda.is_available():
+    wkv6_cuda = load(
+        name="wkv6",
+        sources=["models/rwkv/cuda/wkv6_op.cpp", f"models/rwkv/cuda/wkv6_cuda.cu"],
+        verbose=True,
+        extra_cuda_cflags=[
+            "-res-usage",
+            "--use_fast_math",
+            "-O3",
+            "-Xptxas -O3",
+            "--extra-device-vectorization",
+            f"-D_N_={HEAD_SIZE}",
+            f"-D_T_={int(os.environ['RWKV_CTXLEN'])}",
+        ],
+    )
     class WKV_6(torch.autograd.Function):
         @staticmethod
         def forward(ctx, B, T, C, H, r, k, v, w, u, s=None):
@@ -795,10 +796,7 @@ class RWKV_LM(pl.LightningModule):
                     nn.init.orthogonal_(m[n], gain=gain * scale)
 
             m[n] = m[n].cpu()
-            if os.environ["RWKV_FLOAT_MODE"] == "fp16":
-                m[n] = m[n].half()
-            elif os.environ["RWKV_FLOAT_MODE"] == "bf16":
-                m[n] = m[n].bfloat16()
+            m[n] = m[n].bfloat16()
 
             # if n == "emb.weight":
             #     print(m[n])
