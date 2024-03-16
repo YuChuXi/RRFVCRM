@@ -12,7 +12,7 @@ __global__ void kernel_forward(const int B, const int T, const int C, const int 
     const int h = blockIdx.x % H;
     const int i = threadIdx.x;
     _u += h*_N_;
-    _s += h*_N_*_N_ + i*_N_; // wrong if B > 1 !!!
+    _s += h*_N_*_N_ + i*_N_ + b*T*C; // wrong if B > 1 !!!
 
     __shared__ float r[_N_], k[_N_], u[_N_], w[_N_];
     float state[_N_];

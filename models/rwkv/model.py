@@ -37,35 +37,13 @@ if os.environ["RWKV_JIT_ON"] == "1":
 
 from torch.utils.cpp_extension import load
 
-HEAD_SIZE = int(os.environ["RWKV_HEAD_SIZE_A"])
 
+if os.environ["RWKV_CUDA_ON"] == "1":
 
-if torch.cuda.is_available():
-    wkv6_cuda = load(
-        name="wkv6",
-        sources=["models/rwkv/cuda/wkv6_op.cpp", f"models/rwkv/cuda/wkv6_cuda.cu"],
-        verbose=True,
-        extra_cuda_cflags=[
-            "-res-usage",
-            "--use_fast_math",
-            "-O3",
-            "-Xptxas -O3",
-            "--extra-device-vectorization",
-            f"-D_N_={HEAD_SIZE}",
-            f"-D_T_={int(os.environ['RWKV_CTXLEN'])}",
-        ],
-    )
-    class WKV_6(torch.autograd.Function):
+    class WKV_CUDA_CORE(torch.autograd.Function):
         @staticmethod
-        def forward(ctx, B, T, C, H, r, k, v, w, u, s=None):
+        def forward(ctx, wkv6_cuda, B, T, C, H, r, k, v, w, u):
             with torch.no_grad():
-                if s is None:
-                    s = torch.empty(
-                        (B, T, C),
-                        device=r.device,
-                        dtype=torch.bfloat16,
-                        memory_format=torch.contiguous_format,
-                    )
                 y = torch.empty(
                     (B, T, C),
                     device=r.device,
@@ -78,7 +56,6 @@ if torch.cuda.is_available():
                 assert w.dtype == torch.bfloat16
                 assert u.dtype == torch.bfloat16
                 assert s.dtype == torch.bfloat16
-                assert HEAD_SIZE == C // H
                 ctx.B = B
                 ctx.T = T
                 ctx.C = C
@@ -91,12 +68,12 @@ if torch.cuda.is_available():
                 assert s.is_contiguous()
                 ew = (-torch.exp(w.float())).contiguous()
                 ctx.save_for_backward(r, k, v, ew, u)
-                
+
                 wkv6_cuda.forward(B, T, C, H, r, k, v, ew, u, y, s)
                 return y, s
 
         @staticmethod
-        def backward(ctx, gy):
+        def backward(ctx, wkv6_cuda, gy):
             with torch.no_grad():
                 assert gy.dtype == torch.bfloat16
                 B = ctx.B
@@ -143,20 +120,63 @@ if torch.cuda.is_available():
                 wkv6_cuda.backward(B, T, C, H, r, k, v, ew, u, gy, gr, gk, gv, gw, gu)
                 gu = torch.sum(gu, 0).view(H, C // H)
                 return (None, None, None, None, gr, gk, gv, gw, gu)
+
+    class WKV_6(MyModule):
+        wkv6_cuda = None
+
+        def __init__(self):
+            super().__init__()
+
+        def forward(self, B, T, C, H, r, k, v, w, u=None, s=None):
+            if self.wkv6_cuda is None:
+                self.wkv6_cuda = load(
+                    name="wkv6",
+                    sources=[
+                        "models/rwkv/cuda/wkv6_op.cpp",
+                        f"models/rwkv/cuda/wkv6_cuda.cu",
+                    ],
+                    verbose=True,
+                    extra_cuda_cflags=[
+                        "-res-usage",
+                        "--use_fast_math",
+                        "-O3",
+                        "-Xptxas -O3",
+                        "--extra-device-vectorization",
+                        f"-D_N_={C//H}",
+                        f"-D_T_={int(os.environ['RWKV_CTXLEN'])}",
+                    ],
+                )
+
+            return WKV_CUDA_CORE.apply(B, T, C, H, r, k, v, w, u, s)
+
 else:
+
     class WKV_6(MyModule):
         def __init__(self):
             super().__init__()
 
         @MyFunction
         def forward(ctx, B, T, C, H, r, k, v, w, u, s):
-            a = k @ v
-            x = r @ (u * a + s)
-            s = a + w * s
-            x = x.flatten()
+            N = C // H
+            x = torch.empty(
+                (T, B, H, N),
+                device=r.device,
+                dtype=torch.bfloat16,
+                memory_format=torch.contiguous_format,
+            )
+            r = r.permute(0, 2, 1, 3)
+            k = k.permute(0, 2, 3, 1)
+            v = v.permute(0, 2, 1, 3)
+            for t in range(T):
+                rt = r[:, :, t : t + 1, :]
+                kt = r[:, :, :, t : t + 1]
+                vt = r[:, :, t : t + 1, :]
+                at = kt @ vt
+                x[t] = (rt @ (u * at + s)).sequeeze(2)
+                s = at + w[t] * s
+            x = x.permute(1, 0, 2, 3).view(B, T, C)
             return x, s
-        
-        apply = forward
+
 
 ########################################################################################################
 
@@ -222,9 +242,9 @@ class RWKV_TimeMix(MyModule):
                 tmp[n] = ratio_0_to_1 * (1 - (n / (args.dim_att - 1))) + zigzag
 
             self.time_faaaa = nn.Parameter(tmp.reshape(self.n_head, self.head_size))
+            self.wkv = WKV_6()
 
         self.time_shift = nn.ZeroPad2d((0, 0, 1, -1))
-        self.state = None
         self.receptance = nn.Linear(args.n_embd, args.dim_att, bias=False)
         self.key = nn.Linear(args.n_embd, args.dim_att, bias=False)
 
@@ -236,10 +256,15 @@ class RWKV_TimeMix(MyModule):
         )
 
     @MyFunction
-    def jit_func(self, x):
+    def jit_func(self, x, sxx):
         B, T, C = x.size()
 
-        xx = self.time_shift(x) - x
+        xx = self.time_shift(x)
+        if sxx is not None:
+            xx = xx.permute(1, 0, 2)
+            xx[0] = sxx
+            xx = xx.permute(1, 0, 2)
+        xx = xx - x
 
         xxx = x + xx * self.time_maa_x
         xxx = torch.tanh(xxx @ self.time_maa_w1).view(B * T, 5, -1).transpose(0, 1)
@@ -269,17 +294,17 @@ class RWKV_TimeMix(MyModule):
 
         x = self.ln_x(x).view(B, T, C)
         x = self.output(x * g)
-        return x
+        return x, x[:, -1].squeeze(1)  # sxx
 
-    def forward(self, x):
+    def forward(self, x, sxx, s):
         B, T, C = x.size()
         H = self.n_head
 
-        r, k, v, g, w = self.jit_func(x)
+        r, k, v, g, w = self.jit_func(x, sxx)
 
-        x, self.state = WKV_6.apply(B, T, C, H, r, k, v, w, u=self.time_faaaa, s = self.state)
+        x, s = self.wkv(B, T, C, H, r, k, v, w, u=self.time_faaaa, s=s)
 
-        return self.jit_func_2(x, g)
+        return self.jit_func_2(x, g), s
 
 
 ########################################################################################################
@@ -305,15 +330,22 @@ class RWKV_ChannelMix(MyModule):
         self.value = nn.Linear(args.dim_ffn, args.n_embd, bias=False)
 
     @MyFunction
-    def forward(self, x):
-        xx = self.time_shift(x) - x
+    def forward(self, x, sxx):
+        xx = self.time_shift(x)
+        if sxx is not None:
+            xx = xx.permute(1, 0, 2)
+            xx[0] = sxx
+            xx = xx.permute(1, 0, 2)
+        xx = xx - x
+
         xk = x + xx * self.time_maa_k
         xr = x + xx * self.time_maa_r
 
         k = self.key(xk)
         k = torch.relu(k) ** 2
         kv = self.value(k)
-        return torch.sigmoid(self.receptance(xr)) * kv
+        x = torch.sigmoid(self.receptance(xr)) * kv
+        return x, x[:, -1].squeeze(1)
 
 
 ########################################################################################################
@@ -340,13 +372,19 @@ class MishGLU(MyModule):
             self.value = nn.Linear(args.dim_ffn, args.n_embd, bias=False)
 
     @MyFunction
-    def forward(self, x):
+    def forward(self, x, sxx):
         xx = self.time_shift(x)
+        if sxx is not None:
+            xx = xx.permute(1, 0, 2)
+            xx[0] = sxx
+            xx = xx.permute(1, 0, 2)
+
         xa = x * self.time_mix_k + xx * (1 - self.time_mix_k)
         xb = x * self.time_mix_r + xx * (1 - self.time_mix_r)
         a = self.aa(xa)
         b = self.bb(xb)
-        return self.value(a * F.mish(b))
+        x = self.value(a * F.mish(b))
+        return x, x[:, -1].squeeze(1)
 
 
 ########################################################################################################
@@ -396,9 +434,32 @@ class Block(nn.Module):
             self.drop0 = nn.Dropout(p=args.dropout)
             self.drop1 = nn.Dropout(p=args.dropout)
 
-    def forward(self, x, x_emb=None):
+    def forward(self, x, state=None, x_emb=None):
         args = self.args
         B, T, C = x.size()
+        if state is None:
+            state = [
+                torch.zeros(
+                    (B, C),  # att_xx
+                    device=x.device,
+                    dtype=torch.bfloat16,
+                ).contiguous(),
+                torch.zeros(
+                    (
+                        B,
+                        C // args.head_size_a,
+                        args.head_size_a,
+                        args.head_size_a,
+                    ),  # att_kv
+                    device=x.device,
+                    dtype=torch.bfloat16,
+                ).contiguous(),
+                torch.zeros(
+                    (B, C),  # ffn_xx
+                    device=x.device,
+                    dtype=torch.bfloat16,
+                ).contiguous(),
+            ]
         if self.layer_id == 0:
             x = self.ln0(x)
             if args.my_pos_emb > 0:
@@ -407,16 +468,22 @@ class Block(nn.Module):
 
         if self.args.dropout == 0:
             if self.layer_id == 0 and args.pre_ffn > 0:
-                x = x + self.ffnPre(self.ln1(x))
+                nx, state[0] = self.ffnPre(self.ln1(x), state[0])
+                x = x + nx
             else:
-                x = x + self.att(self.ln1(x))
-            x = x + self.ffn(self.ln2(x))
+                nx, state[0], state[1] = self.att(self.ln1(x), state[0], state[1])
+                x = x + nx
+            nx, state[2] = self.ffn(self.ln2(x), state[2])
+            x = x + nx
         else:
             if self.layer_id == 0 and args.pre_ffn > 0:
-                x = self.drop0(x + self.ffnPre(self.ln1(x)))
+                nx, state[0] = self.ffnPre(self.ln1(x), state[0])
+                x = self.drop0(x + nx)
             else:
-                x = self.drop0(x + self.att(self.ln1(x)))
-            x = self.drop1(x + self.ffn(self.ln2(x)))
+                nx, state[0], state[1] = self.att(self.ln1(x), state[0], state[1])
+                x = self.drop0(x + nx)
+            nx, state[2] = self.ffn(self.ln2(x), state[2])
+            x = self.drop1(x + nx)
 
         if args.tiny_att_dim > 0 and self.layer_id == args.tiny_att_layer:
             xx = self.tiny_ln(x)
@@ -425,7 +492,7 @@ class Block(nn.Module):
             c = (q @ k.transpose(-2, -1)) * (args.tiny_att_dim ** (-0.5))
             c = c.masked_fill(self.tiny_mask[:T, :T] == 0, 0)
             x = x + c @ self.tiny_v(x_emb)
-        return x
+        return x, state
 
 
 class L2Wrap(torch.autograd.Function):
@@ -626,28 +693,33 @@ class RWKV_LM(pl.LightningModule):
             return cfg.get("offload_optimizer") or cfg.get("offload_param")
         return False
 
-    def forward(self, idx):
+    def forward(self, idx, state=None):
         args = self.args
         B, T = idx.size()
         assert T <= args.ctx_len, "Cannot forward, model ctx_len is exhausted."
 
         x = self.emb(idx)
         x_emb = x
+        state = [[None, None, None] for i in range(args.n_layer)]
 
         if args.dropout > 0:
             x = self.drop0(x)
         if args.tiny_att_dim > 0:
             for block in self.blocks:
                 if args.grad_cp == 1:
-                    x = deepspeed.checkpointing.checkpoint(block, x, x_emb)
+                    x, state[block.layer_id] = deepspeed.checkpointing.checkpoint(
+                        block, x, state[block.layer_id], x_emb
+                    )
                 else:
-                    x = block(x, x_emb)
+                    x, state[block.layer_id] = block(x, state[block.layer_id], x_emb)
         else:
             for block in self.blocks:
                 if args.grad_cp == 1:
-                    x = deepspeed.checkpointing.checkpoint(block, x)
+                    x, state[block.layer_id] = deepspeed.checkpointing.checkpoint(
+                        block, x, state[block.layer_id]
+                    )
                 else:
-                    x = block(x)
+                    x, state[block.layer_id] = block(x, state[block.layer_id])
 
         x = self.ln_out(x)
 
@@ -668,7 +740,7 @@ class RWKV_LM(pl.LightningModule):
         else:
             x = self.head(x)
 
-        return x
+        return x, state
 
     def training_step(self, batch, batch_idx):
         args = self.args
