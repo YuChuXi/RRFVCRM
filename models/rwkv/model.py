@@ -42,7 +42,7 @@ if os.environ["RWKV_CUDA_ON"] == "1":
 
     class WKV_CUDA_CORE(torch.autograd.Function):
         @staticmethod
-        def forward(ctx, wkv6_cuda, B, T, C, H, r, k, v, w, u):
+        def forward(ctx, wkv6_cuda, B, T, C, H, r, k, v, w, u, s):
             with torch.no_grad():
                 y = torch.empty(
                     (B, T, C),
@@ -158,6 +158,7 @@ else:
         @MyFunction
         def forward(ctx, B, T, C, H, r, k, v, w, u, s):
             N = C // H
+            w = torch.exp(-torch.exp(w))
             x = torch.empty(
                 (T, B, H, N),
                 device=r.device,
@@ -174,7 +175,7 @@ else:
                 at = kt @ vt
                 x[t] = (rt @ (u * at + s)).sequeeze(2)
                 s = at + w[t] * s
-            x = x.permute(1, 0, 2, 3).view(B, T, C)
+            x = x.permute(1, 0, 2, 3).reshape(B, T, C)
             return x, s
 
 
@@ -264,6 +265,7 @@ class RWKV_TimeMix(MyModule):
             xx = xx.permute(1, 0, 2)
             xx[0] = sxx
             xx = xx.permute(1, 0, 2)
+        sxx = x[:,-1,:]
         xx = xx - x
 
         xxx = x + xx * self.time_maa_x
@@ -285,7 +287,7 @@ class RWKV_TimeMix(MyModule):
         ww = torch.tanh(xw @ self.time_decay_w1) @ self.time_decay_w2
         w = self.time_decay + ww
 
-        return r, k, v, g, w
+        return r, k, v, g, w, sxx
 
     @MyFunction
     def jit_func_2(self, x, g):
@@ -294,17 +296,17 @@ class RWKV_TimeMix(MyModule):
 
         x = self.ln_x(x).view(B, T, C)
         x = self.output(x * g)
-        return x, x[:, -1].squeeze(1)  # sxx
+        return x # sxx
 
     def forward(self, x, sxx, s):
         B, T, C = x.size()
         H = self.n_head
 
-        r, k, v, g, w = self.jit_func(x, sxx)
+        r, k, v, g, w ,sxx = self.jit_func(x, sxx)
 
         x, s = self.wkv(B, T, C, H, r, k, v, w, u=self.time_faaaa, s=s)
 
-        return self.jit_func_2(x, g), s
+        return self.jit_func_2(x, g), sxx, s
 
 
 ########################################################################################################
@@ -336,6 +338,8 @@ class RWKV_ChannelMix(MyModule):
             xx = xx.permute(1, 0, 2)
             xx[0] = sxx
             xx = xx.permute(1, 0, 2)
+        sxx = x[:,-1,:]
+
         xx = xx - x
 
         xk = x + xx * self.time_maa_k
@@ -345,7 +349,7 @@ class RWKV_ChannelMix(MyModule):
         k = torch.relu(k) ** 2
         kv = self.value(k)
         x = torch.sigmoid(self.receptance(xr)) * kv
-        return x, x[:, -1].squeeze(1)
+        return x, sxx
 
 
 ########################################################################################################
@@ -378,13 +382,14 @@ class MishGLU(MyModule):
             xx = xx.permute(1, 0, 2)
             xx[0] = sxx
             xx = xx.permute(1, 0, 2)
+        sxx = x[:,-1,:]
 
         xa = x * self.time_mix_k + xx * (1 - self.time_mix_k)
         xb = x * self.time_mix_r + xx * (1 - self.time_mix_r)
         a = self.aa(xa)
         b = self.bb(xb)
         x = self.value(a * F.mish(b))
-        return x, x[:, -1].squeeze(1)
+        return x, sxx
 
 
 ########################################################################################################
