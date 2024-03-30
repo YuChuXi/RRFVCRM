@@ -1,52 +1,33 @@
 import os
 
-
 os.environ["RWKV_JIT_ON"] = '1'
 os.environ["RWKV_CUDA_ON"] = '0' # if '1' then use CUDA kernel for seq mode (much faster)
 # make sure cuda dir is in the same level as modeling_rwkv.py
-from models.rwkv  import RWKV_LM 
-from models.rwkv import WorldTokenizer, sample_logits
+from models.rwkv import RWKV_LM, sample_logits, TRIE_TOKENIZER, RWKV_TOKENIZER
 import gc
 import gradio as gr
 import base64
 from io import BytesIO
 import torch
 import torch.nn.functional as F
-from datetime import datetime
-from transformers import CLIPImageProcessor
-#from huggingface_hub import hf_hub_download
-from pynvml import *
+from models.rwkv.utils import PIPELINE, PIPELINE_ARGS    
 #nvmlInit()
 #gpu_h = nvmlDeviceGetHandleByIndex(0)
-device = torch.device("cuda") #调用hip设备(其实写cuda就是hip)
-if torch.cuda.is_available():
-    print("device :hip or cuda")
-CHUNK_LEN = 256  # split input into chunks to save VRAM (shorter -> slower, but saves VRAM)
-ctx_limit = 3500
-########################## text rwkv ################################################################
 
-from rwkv.utils import PIPELINE, PIPELINE_ARGS     
-"""
-title_v6 = "RWKV-x060-World-1B6-v2-20240208-ctx4096"     ##调用V6模型
-model_path_v6 = hf_hub_download(repo_id="BlinkDL/rwkv-6-world", filename=f"{title_v6}.pth")
-model_v6 = RWKV(model=model_path_v6, strategy= cuda fp16')
-pipeline_v6 = PIPELINE(model_v6, "rwkv_vocab_v20230424")  """
+#判断设备#
+if torch.cuda.is_available():
+    device = torch.device("cuda") #调用hip设备(其实写cuda就是hip)
+    print("device :hip or cuda")
+else: 
+    device = torch.device("cpu")
+
 ##调用V5模型
 title="rwkv_v5_AMD_ROCm"    
-model_path = "/home/alic-li/RWKV-LM/model/world.pth" ##模型路径(可修改)
-model = RWKV_LM(n_embd = model_path , n_layer = 6 , W = bf64)  ##调整策略
+model_path = "/home/alic-li/RWKV-LM/model/RWKV-6-v2-ctx4096.roleplay.pth" ##模型路径(可修改)
+model = RWKV_LM(model=model_path, strategy='cuda fp16')  ##调整策略
 pipeline = PIPELINE(model, "rwkv_vocab_v20230424")  ##模型词库
-user = "user"
-
-def generate_prompt(instruction, input=""):
-    instruction = instruction.strip().replace('\r\n','\n').replace('\n\n','\n')
-    input = input.strip().replace('\r\n','\n').replace('\n\n','\n')
-    if input:
-        return f"please input something~~~"
-
-model_tokens = []
-model_state = None
-
+ctx_limit = 3500
+########################## text rwkv ################################################################
 def evaluate(
     ctx,
     token_count=200,
@@ -72,7 +53,7 @@ def evaluate(
         for n in occurrence:
             out[n] -= (args.alpha_presence + occurrence[n] * args.alpha_frequency)
 
-        token = sample_logits(out, temperature=args.temperature, top_p=args.top_p)
+        token = pipeline.sample_logits(out, temperature=args.temperature, top_p=args.top_p)
         if token in args.token_stop:
             break
         all_tokens += [token]
@@ -90,9 +71,9 @@ def evaluate(
         else:
             occurrence[token] += www
             
-        tmp = pipeline.decode(all_tokens[out_last:])
-        if '\ufffd' not in tmp:
-            out_str += tmp
+        anser = pipeline.decode(all_tokens[out_last:])
+        if '\ufffd' not in anser:
+            out_str += anser
             yield out_str.strip()
             out_last = i + 1
 
@@ -107,8 +88,89 @@ def evaluate(
  
  
  
+################################################dialogue######################################################
+model_state = None
+Assistant = "Molice"
+out_last = 0
+occurrence = {}
+out_tokens = []
+answer = ""
+msg = ""
+out_str = ""
 
+def chat(
+    user_name,
+    ctx,
+    token_count,
+    temperature,
+    top_p,
+    presencePenalty,
+    countPenalty,
+):
+    global model_state, Assistant, occurrence, answer, msg, out_last, out_str, out_tokens
+    if user_name == None:
+        user_name = "Bob"
+
+    if msg != "" :
+        pass
+    #elif os.path.exists("./model-data/" + user_name + ".txt"):      ##启用历史聊天记录分析
+        #msg = open("./model-data/" + user_name + ".txt").read()
+    elif os.path.exists("./model-data/" + user_name + ".txt"):
+        msg = ""
+    else:
+        msg = open("./model-data/" + user_name + ".txt")   ##新建聊天记录
+        msg =""  ##清空当前聊天记录
     
+    msg += user_name + ": " + ctx + "\n\n" + Assistant + ": "
+    
+    if os.path.exists("./model-data/" + user_name + ".pth"):   #加载历史状态
+        model_state = torch.load("./model-data/" + user_name + ".pth", map_location=device)
+    else:
+        model_state = None              ##新建状态
+    
+    tokens = pipeline.encode(msg)
+    out, model_state = model.forward(tokens, model_state)
+    
+    args = PIPELINE_ARGS(temperature = max(0.2, float(temperature)), top_p = float(top_p),
+                     alpha_frequency = countPenalty,
+                     alpha_presence = presencePenalty,
+                     token_ban = [], # ban the generation of some tokens
+                     token_stop = [0]) # stop generation whenever you see any token here
+    
+    for i in range(int(token_count)):
+        for n in occurrence:
+            out[n] -= args.alpha_presence + occurrence[n] * args.alpha_frequency # repetition penalty
+        out[0] -= 1e10  # disable END_OF_TEXT
+        
+        token = pipeline.sample_logits(out, temperature, top_p)
+        
+        for xxx in occurrence:
+            occurrence[xxx] *= 0.99
+        occurrence[token] = 1 + (occurrence[token] if token in occurrence else 0)
+        out, model_state = model.forward([token], model_state)
+        out_tokens += [token]
+        answer += pipeline.decode([token])
+        if "\n\n" in answer:
+            yield answer.strip()
+            break
+    if "\n\n" in answer:
+            yield answer.strip()
+    msg += answer
+    text =  user_name + ": " + ctx + "\n\n" + Assistant + ": " + answer
+    text_file = open("./model-data/" + user_name + ".txt", "a")
+    text_file.write(text)
+    torch.save(model_state,"./model-data/" + user_name + ".pth")
+    answer = ""
+    model_state = None
+    gc.collect()    
+    torch.cuda.empty_cache()   
+    return user_name, model_state, msg
+    
+################################################save_def#############################################
+def save_state():
+    global model_state
+    torch.save(model_state,"./model-data/" + user_name + ".pth")
+
 
 
 
@@ -116,7 +178,7 @@ def evaluate(
 with gr.Blocks(title=title) as demo:
     gr.HTML(f"<div style=\"text-align: center;\">\n<h1>{title}</h1>\n</div>")
     with gr.Tab("续写"):           ##text model tab
-        gr.Markdown(f"主程序基于huggingface上的demo,作者源代码仓库:(https://github.com/BlinkDL/RWKV-LM) Powered By AMD Radeon!")
+        gr.Markdown(f"主程序基于huggingface上的demo,并加之以魔改,作者源代码仓库:(https://github.com/BlinkDL/RWKV-LM) Powered By AMD Radeon!")
         gr.Markdown(f"######玉子姐姐最可爱了～～～######")
         gr.Markdown(f"######模型被调教坏了从我显卡上滚出去！要被玩坏的～～～######")
         with gr.Row():
@@ -140,18 +202,18 @@ with gr.Blocks(title=title) as demo:
         with gr.Row():
             with gr.Column():
                 input = gr.Textbox(lines=2, label="input", value="")
+                user_name = gr.Textbox(lines=1,label="Pleas press you user name~", value="")
                 token_count = gr.Slider(10, 10000, label="Max Tokens", step=10, value=333)
                 temperature = gr.Slider(0.2, 3.0, label="Temperature", step=0.1, value=1.0)
                 top_p = gr.Slider(0.0, 1.0, label="Top P", step=0.05, value=0.3)
-                presence_penalty = gr.Slider(0.0, 1.0, label="Presence Penalty", step=0.1, value=1)
-                count_penalty = gr.Slider(0.0, 1.0, label="Count Penalty", step=0.1, value=1)
+                presence_penalty = gr.Slider(0.0, 10.0, label="Presence Penalty", step=0.1, value=1)
+                count_penalty = gr.Slider(0.0, 10.0, label="Count Penalty", step=0.1, value=1)
             with gr.Column():
                 with gr.Row():
                     submit = gr.Button("Submit", variant="primary")
-                    clear = gr.Button("Clear", variant="secondary")
-                output = gr.Textbox(label="Output", lines=5)
-        submit.click(chat, [input, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
+                    clear = gr.Button("Clear", variant="secondary")                    
+                output = gr.Textbox(label="Output", lines=5)               
+        submit.click(chat, [user_name,input, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
         clear.click(lambda: None, [], [output])
-
-##demo.queue(concurrency_count=1, max_size=10)   #多线程设置
-demo.launch(server_name="127.0.0.1",server_port=8080,show_error=True,share=False)
+demo.queue(default_concurrency_limit=6)   #多线程设置
+demo.launch(server_name="192.168.0.105", server_port=11451, show_error=True, share=True)
