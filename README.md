@@ -1,5 +1,5 @@
 #
-![RRFVCM](assets/logo.png)
+![RRFVCM](assets/logo.jpg)
 
 ## 前言
 一个以 RWKV 模型架构为基础的语音、动作生成AI
