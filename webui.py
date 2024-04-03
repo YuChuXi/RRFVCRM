@@ -25,8 +25,8 @@ with gr.Blocks(title=title_0) as demo:
                 with gr.Row():
                     submit = gr.Button("Submit", variant="primary")
                     clear = gr.Button("Clear", variant="secondary")
-                face_motion = gr.Textbox(label="Face Motion Command", lines=1)
-                motion = gr.Textbox(label="Motion Command", lines=1)
+                face_motion = gr.Textbox(label="Face Motion Command Output", lines=1)
+                action = gr.Textbox(label="Action Command Output", lines=1)
                 output = gr.Textbox(label="Text Output", lines=5)
                 voice_output = gr.Audio(value = None , format = "wave" , label = "Voice Output" )
         #submit.click(evaluate, [prompt, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
