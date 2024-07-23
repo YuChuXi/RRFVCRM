@@ -1,6 +1,7 @@
 import cv2
 import tqdm
 import torch
+import numpy as np
 import mediapipe as mp
 import matplotlib.pyplot as plt
 from mediapipe import solutions
@@ -8,7 +9,7 @@ from mediapipe.tasks import python
 from mediapipe.tasks.python import vision
 from mediapipe.framework.formats import landmark_pb2
 
-model_path = "face_landmarker.task"
+model_path = "models/face_landmarker/face_landmarker.task"
 
 
 
@@ -103,7 +104,7 @@ options = vision.FaceLandmarkerOptions(
 detector = vision.FaceLandmarker.create_from_options(options)
 
 
-def face_track(input, output):
+def face_landmarker(input, output, ctx = 1024):
     videoin = cv2.VideoCapture(input)
     bar = tqdm.tqdm(total=int(videoin.get(cv2.CAP_PROP_FRAME_COUNT)))
     blendshapes = [0] * 52
@@ -136,10 +137,12 @@ def face_track(input, output):
         out.append(blendshapes)
     bar.close()
     print(len(out))
-    torch.save(f"{output}.pth", torch.tensor(out).bfloat16())
-
-
-face_track("input.mp4", "a")
+    for start in range(0, len(out), ctx):
+        end = start+ctx
+        if end >= len(out):
+            out += out[-1] * (end - out + 1)
+        print(f"save: {output}-{start}-{end}-face.pth")
+        torch.save(f"{output}-{start}-{end}-face.pth", torch.tensor(out[start:end]).bfloat16())
 
 
 # ['_neutral', 'browDownLeft', 'browDownRight', 'browInnerUp', 'browOuterUpLeft', 'browOuterUpRight', 'cheekPuff', 'cheekSquintLeft', 'cheekSquintRight', 'eyeBlinkLeft', 'eyeBlinkRight', 'eyeLookDownLeft', 'eyeLookDownRight', 'eyeLookInLeft', 'eyeLookInRight', 'eyeLookOutLeft', 'eyeLookOutRight', 'eyeLookUpLeft', 'eyeLookUpRight', 'eyeSquintLeft', 'eyeSquintRight', 'eyeWideLeft', 'eyeWideRight', 'jawForward', 'jawLeft', 'jawOpen', 'jawRight', 'mouthClose', 'mouthDimpleLeft', 'mouthDimpleRight', 'mouthFrownLeft', 'mouthFrownRight', 'mouthFunnel', 'mouthLeft', 'mouthLowerDownLeft', 'mouthLowerDownRight', 'mouthPressLeft', 'mouthPressRight', 'mouthPucker', 'mouthRight', 'mouthRollLower', 'mouthRollUpper', 'mouthShrugLower', 'mouthShrugUpper', 'mouthSmileLeft', 'mouthSmileRight', 'mouthStretchLeft', 'mouthStretchRight', 'mouthUpperUpLeft', 'mouthUpperUpRight', 'noseSneerLeft', 'noseSneerRight']

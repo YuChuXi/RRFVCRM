@@ -1,2 +1,4 @@
 weights/pretrained/*
 *.pyc
+*.mp4
+*.pth
