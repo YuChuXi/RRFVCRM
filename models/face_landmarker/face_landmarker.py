@@ -140,7 +140,7 @@ def face_landmarker(input, output, ctx = 1024):
     for start in range(0, len(out), ctx):
         end = start+ctx
         if end >= len(out):
-            out += out[-1] * (end - out + 1)
+            out += out[-1] * (end - len(out) + 1)
         print(f"save: {output}-{start}-{end}-face.pth")
         torch.save(torch.tensor(out[start:end]).bfloat16(), f"{output}-{start}-{end}-face.pth")
 
