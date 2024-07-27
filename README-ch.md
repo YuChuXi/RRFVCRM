@@ -62,6 +62,10 @@ https://huggingface.co/BlinkDL/rwkv-5-music/tree/main
 - 运行 ```python ./run.py```
 - 模型路径在```run.py```的第17行，若无法正常运行修改第22行"strategy='cuda fp32'"为"strategy='cpu fp32'"
 
+rwkv-language-test
+--
+- 进入 ```./models/rwkv/```
+- 运行 ```python language_test.py```
 ## 遇到问题?
 - parselmouth 安装失败: 暂时将 ```setuptools``` 降级至 58.0 以下
 

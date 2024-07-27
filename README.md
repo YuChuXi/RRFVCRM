@@ -65,6 +65,11 @@ https://huggingface.co/BlinkDL/rwkv-5-music/tree/main
 - run ```python ./run.py```
 - The model path in the```run.py```line 17，If it does not work properly, modify line 22 "strategy='cuda fp32'" to "strategy='cpu fp32'"
 
+rwkv-language-test
+--
+- enter ```./models/rwkv/```
+- run ```python language_test.py```
+
 ## Have some problems?
 - parselmouth instal faild: Downgrade ```setuptools```  to 58.0 temporarly
 

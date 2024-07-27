@@ -6,9 +6,9 @@ from src.sampler import sample_logits
 from src.rwkv_tokenizer import RWKV_TOKENIZER
 if __name__ == '__main__':
     args = {
-        'MODEL_NAME': 'weight/RWKV-x060-World-1B6-v2.1-20240328-ctx4096', #模型文件的名字，pth结尾的权重文件。
+        'MODEL_NAME': '/media/alic-li/WDdata03/RWKV-model/RWKV-x060-World-3B-v2-20240228-ctx4096', #模型文件的名字，pth结尾的权重文件。
         'vocab_size': 65536, #词表大小
-        'device': "cpu", # 运行设备，可选'cpu','cuda','musa','npu'
+        'device': "cuda", # 运行设备，可选'cpu','cuda','musa','npu'
         'onnx_opset': '12',
     }
     device = args['device']
