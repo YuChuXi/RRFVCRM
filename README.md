@@ -39,8 +39,8 @@ Put pre-trained weights in ```weigths/pretrained/```
 ## Project Structure
 
 ## Trianing
-- In the trianing processing [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace/releases) Extract facial features，configure the path in ```config/openseeface.json``` 
-- Automatic speech annotation may be required for some datasets [DeepSpeech]](https://github.com/mozilla/DeepSpeech)
+- In the trianing processing [google-mediapipe](https://github.com/emilianavt/OpenSeeFace/releases) Extract facial features，configure the path in ```config/openseeface.json``` 
+- Automatic speech annotation may be required for some datasets [openai-whisper]](https://github.com/mozilla/DeepSpeech)
 
 ### Prepare Dataset 
 You can prepare the data yourself or refer to the following datasets:
