@@ -1,10 +1,10 @@
 import time
 import os
 import torch
-from src.model import RWKV_RNN
-#from src.original_model import RWKV_RNN
-from src.sampler import sample_logits
-from src.rwkv_tokenizer import RWKV_TOKENIZER
+from models.rwkv.src.model import RWKV_RNN
+#from models.rwkv.src.original_model import RWKV_RNN
+from models.rwkv.src.sampler import sample_logits
+from models.rwkv.src.rwkv_tokenizer import RWKV_TOKENIZER
 
 if __name__ == '__main__':
     opsets = [16, 17, 18]

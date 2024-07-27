@@ -13,7 +13,7 @@ if importlib.util.find_spec("deepspeed"):
     import deepspeed
     from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 
-from models.rwkv.model import Block, L2Wrap
+from models.rwkv.src.model import RWKV_Block
 
 
 def __nop(ob):
@@ -51,7 +51,7 @@ class RWKV_Steram(pl.LightningModule):
             args.n_embd,
         )
 
-        self.blocks = nn.ModuleList([Block(args, i) for i in range(args.n_layer)])
+        self.blocks = nn.ModuleList([RWKV_Block(args, i) for i in range(args.n_layer)])
 
         self.ln_out = nn.LayerNorm(args.n_embd)
         self.head_out = nn.Linear(

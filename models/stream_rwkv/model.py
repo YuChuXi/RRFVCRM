@@ -13,7 +13,7 @@ if importlib.util.find_spec("deepspeed"):
     import deepspeed
     from deepspeed.ops.adam import DeepSpeedCPUAdam, FusedAdam
 
-from models.rwkv.model import Block, L2Wrap
+from models.rwkv.src.model import RWKV_Block
 
 
 def __nop(ob):
