@@ -57,6 +57,13 @@ You can prepare the data yourself or refer to the following datasets:
 ### Trianing TF02M
 
 ### Expand
+rwkv-music-demo
+--
+- Prepare molel(choose the MIDI-model)
+https://huggingface.co/BlinkDL/rwkv-5-music/tree/main
+- enter the ```./music``` path
+- run ```python ./run.py```
+- The model path in the```run.py```line 17，If it does not work properly, modify line 22 "strategy='cuda fp32'" to "strategy='cpu fp32'"
 
 ## Have some problems?
 - parselmouth instal faild: Downgrade ```setuptools```  to 58.0 temporarly
