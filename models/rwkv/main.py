@@ -8,12 +8,12 @@ from src.sampler import sample_logits
 from src.rwkv_tokenizer import RWKV_TOKENIZER
 if __name__ == '__main__':
     args = {
-        'MODEL_NAME': 'weight/RWKV-x060-World-1B6-v2.1-20240328-ctx4096', #模型文件的名字，pth结尾的权重文件。
+        'MODEL_NAME': 'rwkv-lm-models/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth', #模型文件的名字，pth结尾的权重文件。
         'vocab_size': 65536, #词表大小
-        'device': 'cpu', # 运行设备，可选'cpu','cuda','musa','npu'
+        'device': 'cuda', # 运行设备，可选'cpu','cuda','musa','npu'
         'onnx_opset': '18', # 非必要不要使用 <18 的值，会引起数值不稳定
         'parrallel': 'True', # 是否使用并行计算
-        'STATE_NAME': 'weight/rwkv-x060-chn_single_round_qa-1B6-20240516-ctx2048.pth', # 如果不加载state权重，请置为''
+        'STATE_NAME': '', # 如果不加载state权重，请置为''
         # 请务必保证模型权重和State权重对应，这里暂时不做检查
         'dataformat': 'bf16'
     }
