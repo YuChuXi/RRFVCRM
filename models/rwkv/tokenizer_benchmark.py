@@ -1,5 +1,5 @@
-from models.rwkv.src.old_tokenizer import RWKV_TOKENIZER
-from models.rwkv.src.rwkv_tokenizer import RWKV_TOKENIZER as TRIE_TOKENIZER
+from src.old_tokenizer import RWKV_TOKENIZER
+from src.rwkv_tokenizer import RWKV_TOKENIZER as TRIE_TOKENIZER
 from icecream import ic
 import requests
 

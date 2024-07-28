@@ -1,91 +1,163 @@
 import torch
 import torch.nn.functional as F
-
-def old_sample_logits(out: torch.Tensor, temperature: float = 1.0, top_p: float = 0.8) -> torch.Tensor:
-    """
-    对模型输出的logits进行采样。
-
-    Args:
-        out (torch.Tensor): 模型输出的logits张量,形状为[Batch, vocab_size]。
-        temperature (float): 温度参数,用于调节采样的多样性,默认为1.0。
-        top_p (float): Top-p截断参数,用于稳定和控制采样概率分布,默认为0.8。
-
-    Returns:
-        torch.Tensor: 采样结果,形状为[Batch, 1],每个元素表示一个样本中采样得到的词的索引。
-    """
-    # 确保top_p和temperature都是非负值
-    top_p = max(0.0, min(1.0, top_p))
-    temperature = max(0.0, temperature)
-
-    # 将out转换为概率分布
-    probs = F.softmax(out, dim=-1)
-
-    # 根据top_p截断概率分布
-    sorted_probs, _ = torch.sort(probs, descending=True)
-    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
-    cutoff_mask = (cumulative_probs > top_p).float()
-    cutoff_index = torch.argmax(cutoff_mask * torch.arange(cutoff_mask.shape[-1], device=cutoff_mask.device).float(), dim=-1)
-    cutoff_values = sorted_probs.gather(-1, cutoff_index.unsqueeze(-1)).squeeze(-1)
-    probs = torch.where(probs < cutoff_values.unsqueeze(-1), torch.zeros_like(probs), probs)
-
-    # 对概率分布进行温度调节
-    if temperature != 1.0:
-        probs = torch.pow(probs, 1.0 / temperature)
-
-    # 归一化概率分布
-    probs /= torch.sum(probs, dim=-1, keepdim=True)
-
-    # 如果top_p为0,则选择概率最大的位置;否则按照概率分布随机采样
-    if top_p != 0:
-        sampled_indices = torch.multinomial(probs, num_samples=1)
-    else:
-        sampled_indices = torch.argmax(probs, dim=-1, keepdim=True)
-        
-
-    return sampled_indices
+import numpy as np
+from collections import defaultdict
+from typing import Optional, Tuple
 
 def sample_logits(out: torch.Tensor, temperature: float = 1.0, top_p: float = 0.8) -> torch.Tensor:
     """
     Sample from the logits tensor produced by the model.
 
     Args:
-        out (torch.Tensor): Logits tensor from the model, shape [* , vocab_size].
+        out (torch.Tensor): Logits tensor from the model, shape [*, vocab_size].
         temperature (float): Temperature parameter for controlling the diversity of sampling. Default is 1.0.
         top_p (float): Top-p truncation parameter for stabilizing and controlling the sampling probability distribution. Default is 0.8.
 
     Returns:
-        torch.Tensor: Sampled indices, shape [*].
+        torch.Tensor: Sampled indices, shape [*]. For example, tensor([10464]).
     """
-    # Apply temperature scaling
-    scaled_logits = out / temperature
+    assert temperature > 0, "Temperature should be positive"
+    assert 0 <= top_p <= 1, "Top-p should be in the range [0, 1]"
 
-    # Convert logits to probabilities
-    probabilities = torch.softmax(scaled_logits, dim=-1)
+    if top_p == 0.0:
+        # Deterministically select the most likely token
+        return torch.argmax(out, dim=-1)
 
-    # Sort the probabilities to identify the top-p candidates
-    sorted_probs, sorted_indices = torch.sort(probabilities, descending=True)
+    if top_p == 1.0:
+        return torch.multinomial(torch.nn.functional.softmax(out, dim=-1), num_samples=1).squeeze(1)
 
-    # Compute the cumulative distribution of probabilities
-    cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+    # Convert logits to log probabilities
+    log_probabilities = torch.nn.functional.log_softmax(
+        out / temperature, dim=-1)
 
-    # Remove tokens with a cumulative probability above the threshold (top_p)
-    sorted_indices_to_remove = cumulative_probs > top_p
-    # Shift the indices to the right to keep the first token above the threshold
-    sorted_indices_to_remove[..., 1:] = sorted_indices_to_remove[..., :-1].clone()
-    sorted_indices_to_remove[..., 0] = 0
+    # Compute the cumulative log probabilities
+    cumulative_log_probs = torch.cumsum(log_probabilities, dim=-1)
 
-    # Create a mask for the indices to remove
-    indices_to_remove = sorted_indices_to_remove.scatter(dim=-1, index=sorted_indices, src=sorted_indices_to_remove)
+    # Create a mask to identify the tokens to remove based on top_p
+    mask_remove = cumulative_log_probs > torch.log(
+        torch.tensor(top_p, device=cumulative_log_probs.device))
 
-    # Use the mask to zero out probabilities that should be removed
-    probabilities.masked_fill_(indices_to_remove, 0.0)
+    # Set the probabilities of tokens to remove to a very small value (e.g., -1e10)
+    log_probabilities = log_probabilities.masked_fill(mask_remove, -1e10)
 
-    # Resample if probabilities are all zero (unlikely but just in case)
-    if torch.all(probabilities == 0):
-        probabilities = torch.ones_like(probabilities)
-        probabilities /= probabilities.sum()
+    # Generate a single sample
+    sampled_index = torch.multinomial(
+        torch.exp(log_probabilities), num_samples=1).squeeze(1)
 
-    # Sample from the modified distribution
-    sampled_indices = torch.multinomial(probabilities, 1)
+    return sampled_index
 
-    return sampled_indices.squeeze(-1)
+
+def apply_penalties(logits: torch.Tensor, temperature: float, top_p: float, presence_penalty: float, frequency_penalty: float, token: Optional[torch.Tensor] = None, freq_dict: Optional[defaultdict] = None) -> Tuple[torch.Tensor, torch.Tensor, defaultdict]:
+    """
+    Apply penalties to the logits tensor and sample from it.
+    """
+    if freq_dict is None:
+        freq_dict = defaultdict(int)
+
+    if token is not None:
+        # 创建一个mask,标识token是否已经出现在生成的序列中
+        mask = torch.zeros_like(logits, dtype=torch.bool).to(logits.device)
+        mask[0][token.tolist()] = True
+
+        # 对已出现的token施加存在惩罚
+        logits = torch.where(mask, logits - presence_penalty, logits)
+       
+        # 根据token的出现频率施加频率惩罚
+        freq_penalties = torch.tensor([freq_dict[i] for i in range(len(logits))], dtype=logits.dtype, device=logits.device)
+        # 缩放频率惩罚,并裁剪到[0, 1]范围内
+        freq_penalties = torch.clamp(freq_penalties / len(freq_dict), 0, 1)
+        logits -= frequency_penalty * freq_penalties
+
+    token_sampled = sample_logits(logits, temperature=temperature, top_p=top_p)
+    
+    # 更新频率字典
+    freq_dict[token_sampled.item()] += 1
+
+    if token is not None:
+        token = torch.cat((token, token_sampled), 0)
+    else:
+        token = token_sampled
+
+    return token_sampled, token, freq_dict
+
+
+def sample_logits_numpy(out: np.ndarray, temperature: float = 1.0, top_p: float = 0.8) -> np.ndarray:
+    """
+    对模型输出的logits进行采样。
+
+    Args:
+        out (np.ndarray): 模型输出的logits张量,形状为[*, vocab_size]。
+        temperature (float): 温度参数,用于调节采样的多样性,默认为1.0。
+        top_p (float): Top-p截断参数,用于稳定和控制采样概率分布,默认为0.8。
+
+    Returns:
+        np.ndarray: 采样结果,形状与输入out的前N-1维相同。
+    """
+    assert temperature > 0, "Temperature should be positive"
+    assert 0 <= top_p <= 1, "Top-p should be in the range [0, 1]"
+
+    if top_p == 0.0:
+        # 确定性地选择概率最大的token
+        return np.argmax(out, axis=-1)
+
+    if top_p == 1.0:
+        # 根据softmax概率分布进行采样
+        probabilities = np.exp(out - np.max(out, axis=-1, keepdims=True))
+        probabilities /= np.sum(probabilities, axis=-1, keepdims=True)
+        sampled_index = np.apply_along_axis(
+            lambda p: np.random.choice(len(p), p=p), -1, probabilities)
+        return sampled_index
+
+    # 将logits转换为对数概率
+    log_probabilities = out / temperature - \
+        np.log(np.sum(np.exp(out / temperature), axis=-1, keepdims=True))
+
+    # 计算累积对数概率
+    sorted_log_probabilities = np.sort(log_probabilities, axis=-1)[:, ::-1]
+    cumulative_log_probs = np.cumsum(sorted_log_probabilities, axis=-1)
+
+    # 创建一个掩码,用于标识根据top_p要移除的tokens
+    mask_remove = cumulative_log_probs > np.log(top_p)
+
+    # 将要移除的tokens的概率设置为一个非常小的值(例如-1e10)
+    log_probabilities[mask_remove] = -1e10
+
+    # 根据调整后的对数概率生成一个样本
+    probabilities = np.exp(log_probabilities)
+    probabilities /= np.sum(probabilities, axis=-1, keepdims=True)
+
+    sampled_index = np.apply_along_axis(
+        lambda p: np.random.choice(len(p), p=p), -1, probabilities)
+
+    return sampled_index
+
+
+def apply_penalties_numpy(logits: np.ndarray, presence_penalty: float, temperature: float, top_p: float, frequency_penalty: float, token: Optional[np.ndarray] = None, freq_dict: Optional[defaultdict] = None) -> Tuple[np.ndarray, np.ndarray, defaultdict]:
+    if freq_dict is None:
+        freq_dict = defaultdict(int)
+
+    if token is not None:
+        # 创建一个mask,标识token是否已经出现在生成的序列中
+        mask = np.zeros_like(logits, dtype=bool)
+        mask[0][token.tolist()] = True
+
+        # 对已出现的token施加存在惩罚
+        logits = np.where(mask, logits - presence_penalty, logits)
+
+        # 根据token的出现频率施加频率惩罚
+        freq_penalties = np.array([freq_dict[i] for i in range(len(logits))], dtype=logits.dtype)
+        # 缩放频率惩罚,并裁剪到[0, 1]范围内
+        freq_penalties = np.clip(freq_penalties / len(freq_dict), 0, 1)
+        logits -= frequency_penalty * freq_penalties
+
+    token_sampled = sample_logits_numpy(logits, temperature=temperature, top_p=top_p)
+
+    # 更新频率字典
+    freq_dict[token_sampled.item()] += 1
+
+    if token is not None:
+        token = np.concatenate((token, token_sampled), axis=0)
+    else:
+        token = token_sampled
+
+    return token_sampled, token, freq_dict
