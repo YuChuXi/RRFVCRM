@@ -56,7 +56,7 @@ You can prepare the data yourself or refer to the following datasets:
 
 ### Trianing TF02M
 
-### Expand
+# Expand
 rwkv-music-demo
 --
 - Prepare molel(choose the MIDI-model)
