@@ -16,8 +16,21 @@
 ### 配置环境
 - 安装 [Python](https://python.org)
 - 安装 CUDA/ROCm 和对应版本的 PyTorch
-- 安装依赖库 ```pip install -r requirements.txt```
-
+- 安装依赖库
+```sh
+pip install -r requirements.txt
+```
+- 如果你用的是AMD的显卡请在```~/.bashrc```里面加入以下指令
+(这里以gfx1100为例子,你可以运行```rocminfo```来查看GFX型号)
+```sh
+export ROCM_PATH=/opt/rocm
+export HSA_OVERRIDE_GFX_VERSION=11.0.0
+```
+执行
+```sh
+sudo usermod -aG render $USERNAME 
+sudo usermod -aG video $USERNAME 
+```
 ### 下载预训练权重
 预训练权重存放于 ```weigths/pretrained/```
 rwkv1b6语言模型(RWKV-LM)放在```./models/rwkv/rwkv-lm-models```
@@ -27,12 +40,20 @@ rwkv1b6语言模型(RWKV-LM)放在```./models/rwkv/rwkv-lm-models```
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
 
 ### 检验
-- 执行 ```python  models/language_test.py``` 若可正常交互则说明准备工作无误
+- 执行
+```sh 
+python  models/language_test.py
+``` 
+- 若可正常交互则说明准备工作无误
 
 ## 快速开始
 - 下载示例模型 [啥都没有](https://nothing)
 - 下载训练有素的VC模型 [啥都没有](https://nothing)
-- 启动！ ```python webui.py```
+- 启动！
+
+```sh
+python webui.py
+```
 
 ## 项目结构
 
@@ -55,12 +76,14 @@ rwkv1b6语言模型(RWKV-LM)放在```./models/rwkv/rwkv-lm-models```
 ### 训练 TF02M
 
 # 拓展
-rwkv-music-demo
+尝试 rwkv-music-demo
 --
 - 准备模型(选择MIDI-model)
 https://huggingface.co/BlinkDL/rwkv-5-music/tree/main
-- 进入```./music```
-- 运行 ```python ./run.py```
+```sh
+cd ./models/music
+python ./run.py
+```
 - 模型路径在```run.py```的第17行，若无法正常运行修改第22行"strategy='cuda fp32'"为"strategy='cpu fp32'"
 
 rwkv-language-test

@@ -19,8 +19,21 @@ A speech motion and action generation AI based on the RWKV model architecture
 ### Preparation Environment
 - Install [Python](https://python.org)
 - Install CUDA/ROCm with the latest PyTorch version
-- install pip lib ```pip install -r requirements.txt```
-
+- install pip lib
+```sh 
+pip install -r requirements.txt
+```
+- If you use AMD graphical card you should add these command in  ```~/.bashrc```
+(Here is the GFX1100m, you can process the ```rocminfo``` to check the GFX version) 
+```sh
+export ROCM_PATH=/opt/rocm
+export HSA_OVERRIDE_GFX_VERSION=11.0.0
+```
+process
+```sh
+sudo usermod -aG render $USERNAME 
+sudo usermod -aG video $USERNAME 
+```
 ### Download pre-trained weights
 Put pre-trained weights in ```weigths/pretrained/```
 Put rwkv1b6 Language model(RWKV-LM) in ```./models/rwkv/rwkv-lm-models```
@@ -30,13 +43,19 @@ Put rwkv1b6 Language model(RWKV-LM) in ```./models/rwkv/rwkv-lm-models```
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
 
 ### Inspect
-- process ```python  models/language_test.py```    (If the interaction is normal, it means the preparation is correct.)
+- process 
+```sh
+python  models/language_test.py
+```
+(If the interaction is normal, it means the preparation is correct.)
 
 ## Qiuvk Start
 - Install the model [None](https://nothing)
 - Install  the VC model [None](https://nothing)
-- Launching！ ```python webui.py```
-
+- Launching！ 
+```sh
+python webui.py
+```
 ## Project Structure
 
 ## Trianing
@@ -58,12 +77,14 @@ You can prepare the data yourself or refer to the following datasets:
 ### Trianing TF02M
 
 # Expand
-rwkv-music-demo
+Try rwkv-music-demo
 --
 - Prepare molel(choose the MIDI-model)
 https://huggingface.co/BlinkDL/rwkv-5-music/tree/main
-- enter the ```./music``` path
-- run ```python ./run.py```
+```sh
+cd ./models/music
+python ./run.py
+```
 - The model path in the```run.py```line 17，If it does not work properly, modify line 22 "strategy='cuda fp32'" to "strategy='cpu fp32'"
 
 rwkv-language-test
