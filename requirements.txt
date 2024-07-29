@@ -1,5 +1,10 @@
-torch>=2.1.0
 numpy>=1.24.3
 icecream
 Flask
-gqdm
+tqdm
+cv2
+math
+scipy
+mediapipe
+copy
+librosa
