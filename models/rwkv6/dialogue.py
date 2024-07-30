@@ -72,6 +72,8 @@ def chat(
             out_str += tmp
             yield out_str.strip()
             out_last = i + 1
+        if "\n\n" in tmp :
+            break
     del out
     del state
     gc.collect()
