@@ -23,7 +23,7 @@ A speech motion and action generation AI based on the RWKV model architecture
 pip install -r requirements.txt
 ```
 - If you use AMD graphical card you should add these command in  ```~/.bashrc```
-(Here is the GFX1100m, you can process the ```rocminfo``` to check the GFX version) 
+(Here is the GFX1100, you can process the ```rocminfo``` to check the GFX version) 
 ```sh
 export ROCM_PATH=/opt/rocm
 export HSA_OVERRIDE_GFX_VERSION=11.0.0
