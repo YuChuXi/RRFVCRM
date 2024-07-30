@@ -89,6 +89,10 @@ python ./run.py
 ```
 - The model path in the```run.py```line 17，If it does not work properly, modify line 22 "strategy='cuda fp32'" to "strategy='cpu fp32'"
 
+State Tuning
+--
+Reference https://github.com/JL-er/RWKV-PEFT
+
 rwkv-language-test
 --
 - enter ```./models/rwkv/```

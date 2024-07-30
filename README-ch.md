@@ -88,6 +88,10 @@ python ./run.py
 ```
 - 模型路径在```run.py```的第17行，若无法正常运行修改第22行"strategy='cuda fp32'"为"strategy='cpu fp32'"
 
+State Tuning
+--
+Reference https://github.com/JL-er/RWKV-PEFT
+
 rwkv-language-test
 --
 - 进入 ```./models/rwkv/```
