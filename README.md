@@ -82,7 +82,7 @@ python  models/language_test.py
 ```sh
 python webui.py
 ```
-#### Revise```models/rwkv6/dialogue.py```in line 19 to adjust the model strategy，default "cuda fp16"
+- Revise---```models/rwkv6/dialogue.py```---in line 19 to adjust the model strategy，default "cuda fp16"
 Alic is a noob in the DeepLearning ，but it's could be running
 # Project Structure
 
