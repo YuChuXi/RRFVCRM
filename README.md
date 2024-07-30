@@ -1,139 +1,129 @@
-#
-![RRFVCM](assets/logo.jpg)
+# ![RRFVCM](assets/RRVtuber.png) Welcome to RRVtuber
+![Language](https://img.shields.io/badge/language-python-brightgreen) ![Documentation](https://img.shields.io/badge/documentation-yes-brightgreen)
 
-# RRFVCM
+## Introduction
+An AI for generating voice and actions based on the RWKV model architecture
 
-###
-[中文文档](./README-ch.md)
+### Motivation
 
-# Preface
-RWKV RNN LLM speech motion and action generater
-## Original Intention
-A speech motion and action generation AI based on the RWKV model architecture
-## Convention
-- Unless otherwise specified, the instructions in the document are executed in the project root directory.
-- ```python``` = ```python3```  if not process```sudo apt install python-is-python3```
-## Preparation
+### Conventions
+- Commands in the documentation are to be executed in the project's root directory unless otherwise specified
+- `python` and `python3` are the same
 
-### Preparation Environment
-- Install [Python](https://python.org)
-- Install CUDA/ROCm with the latest PyTorch version
-- install pip lib
-```sh 
+## 🛠 Preparation
+
+### Setting Up the Environment
+1. Install [Python](https://python.org)
+2. Install CUDA/ROCm and the corresponding version of PyTorch
+3. Install the required libraries
+```sh
 pip install -r requirements.txt
 ```
-- If you use AMD graphical card you should add these command in  ```~/.bashrc```
-(Here is the GFX1100, you can process the ```rocminfo``` to check the GFX version) 
+4. If you are using an AMD GPU, add the following commands to `~/.bashrc` (using gfx1100 as an example, you can find the specific model by running `rocminfo`)
 ```sh
 export ROCM_PATH=/opt/rocm
 export HSA_OVERRIDE_GFX_VERSION=11.0.0
 ```
-process
+5. Run the following commands
 ```sh
 sudo usermod -aG render $USERNAME 
 sudo usermod -aG video $USERNAME 
 ```
-#### If you are an AMD user and want to add cuda operator parallelization, it will be a bit trouble. You need to modify the rwkv standard library, and it may not work.
-#### Really want to RUN？ Well ~~~
+#### If you are an AMD user and want to include CUDA operator parallelization, you need to modify the rwkv standard library:
 ```sh
 cd ~/.local/lib/python3.10/site-packages/rwkv
 vim ./model.py
 ```
-- Revise line 37，line 46，line 472，line 505
-```extra_cuda_cflags=["--use_fast_math", "-O3", "--extra-device-vectorization"]```
-to
-```extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip"]```
-- Global Search```os.environ["RWKV_CUDA_ON"] = '0'```
-Revise to
-```os.environ["RWKV_CUDA_ON"] = '1'```
+- Change lines 37, 46, 472, 505 from `extra_cuda_cflags=["--use_fast_math", "-O3", "--extra-device-vectorization"]` to `extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip"]`
+- Globally search for `os.environ["RWKV_CUDA_ON"] = '0'` and change it to `os.environ["RWKV_CUDA_ON"] = '1'`
 ```sh
 python webui.py
 ```
-#### I sencerly wish you could be success!
-##### You could find ```~/.local/lib/python3.10/site-packages/rwkv```A "hip" directory will appear，That is the converted CUDA operator.
-##### If you falid ? Change back the ```os.environ["RWKV_CUDA_ON"] = '1'```to```os.environ["RWKV_CUDA_ON"] = '0'```
-##### It still runs after changing it back. It's still work, but it lacks elegant parallelization. I don't take the blame for this. This is caused by the ROCm software ecosystem's compatibility. It's good enough that Pytorch can run it.
-### Download pre-trained weights
-Put pre-trained weights in ```./weigths/```
-Put rwkv1b6 Language model(RWKV-LM) in ```./weights/```
+#### Good luck!
+
+##### You will find a hip directory under `~/.local/lib/python3.10/site-packages/rwkv`, which contains the converted CUDA parallel operators
+
+##### Failed? Globally search for `os.environ["RWKV_CUDA_ON"] = '1'` and change it to `os.environ["RWKV_CUDA_ON"] = '0'`
+
+### 📥 Download Pre-trained Weights
+Pre-trained weights are stored in `./weights/`
 - RWKV-LM [RWKV-x060-World-1B6-v2-20240208-ctx4096.pth](https://huggingface.co/BlinkDL/rwkv-6-world/blob/main/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth)
 - Bert [s1bert.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt)
 - HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
 
-### change the model weight path
-- ```./models/rwkv6/dialogue.py``` line 19
-- ```./models/rwkv6/continuation.py```line 19
-- ```./models/music/run.py```line 17
-- ```./models/language_test.py```line 11
-### Inspect
-- process 
-```sh
-python  models/language_test.py
-```
-(If the interaction is normal, it means the preparation is correct.)
+### 📝 Modify Pre-trained Weights Path
+- Line 19 in `./models/rwkv6/dialogue.py`
+- Line 19 in `./models/rwkv6/continuation.py`
+- Line 17 in `./models/music/run.py`
+- Line 11 in `./models/language_test.py`
 
-## Qiuck Start (It is not Available now!)
-- Install the model [None](https://nothing)
-- Install  the VC model [None](https://nothing)
-- Launching！
+### 🧪 Verification
+- Execute
+```sh 
+python models/language_test.py
+``` 
+- If it interacts normally, the preparation work is correct
 
-## Qiuck Start Language model（It is Available now!）
+## 🚀 Quick Run Language Model (It is Available now!)
 ```sh
 python webui.py
 ```
-- Revise---```models/rwkv6/dialogue.py```---in line 19 to adjust the model strategy，default "cuda fp16"
-Alic is a noob in the DeepLearning ，but it's could be running
-# Project Structure
+#### Adjust the model running strategy in line 19 of `models/rwkv6/dialogue.py`, default "cuda fp16"
+Alic the polar bear is not very strong, at least can run
 
-## Trianing
-- In the trianing processing [google-mediapipe](https://github.com/emilianavt/OpenSeeFace/releases) Extract facial features，configure the path in ```config/openseeface.json``` 
-- Automatic speech annotation may be required for some datasets [openai-whisper]](https://github.com/mozilla/DeepSpeech)
+## 📂 Project Structure
 
-### Prepare Dataset 
-You can prepare the data yourself or refer to the following datasets:
-- voice、text [Mozilla Common Voice](https://commonvoice.mozilla.org/zh-CN)
-- voice、face [CelebV-Text](https://github.com/celebv-text/CelebV-Text)
+## 🧠 Training (It is not Available now!)
+- Training requires [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace/releases) to extract facial features. After installation, configure the path in `config/openseeface.json`
+- For some datasets, automatic speech annotation may be required [DeepSpeech](https://github.com/mozilla/DeepSpeech)
 
-### Dataset preprocessing
-- Video or audio fragments（25FPS * 40s a piece，Corresponding to non-language model 25FPS * 1024CTX） ```python ```
-- Estract hubert and f0 ```python ```
-- Extract facial features from video征 ```python ```
+### 📦 Prepare Data
+You can prepare the data yourself or refer to the following datasets
+- Speech, Text [Mozilla Common Voice](https://commonvoice.mozilla.org/zh-CN)
+- Speech, Face [CelebV-Text](https://github.com/celebv-text/CelebV-Text)
 
-### Trianing T2F0
-- Wait for YuChuXi, She is a lazy little fox
-### Trianing TF02M
-- Wait for YuChuXi, She is a lazy little fox
-# Expand
+### ⚙️ Data Preprocessing
+- Video or audio slicing (default 25FPS * 40s per slice, corresponding to non-language model 25FPS * 1024CTX) `python`
+- Extract hubert and f0 `python`
+- Extract facial features from video `python`
+
+### 🎶 Train T2F0
+- Wait for YuChuXi, the lazy fox
+
+### 🎶 Train TF02M
+- Wait for YuChuXi, the lazy fox
+
+## 🌟 Extensions
 Try rwkv-music-demo
 --
-- Prepare molel(choose the MIDI-model)
+- Prepare the model (choose MIDI-model)
 https://huggingface.co/BlinkDL/rwkv-5-music/tree/main
 ```sh
 cd ./models/music
 python ./run.py
 ```
-- The model path in the```run.py```line 17，If it does not work properly, modify line 22 "strategy='cuda fp32'" to "strategy='cpu fp32'"
+- The model path is on line 17 of `run.py`. If it does not run properly, change line 22 from "strategy='cuda fp32'" to "strategy='cpu fp32'"
 
 State Tuning
 --
-Reference https://github.com/JL-er/RWKV-PEFT
+Refer to https://github.com/JL-er/RWKV-PEFT
 
 rwkv-language-test
 --
-- enter ```./models/rwkv/```
-- run ```python language_test.py```
+- Go to `./models/rwkv/`
+- Run `python language_test.py`
 
-## Have some problems?
-- parselmouth instal faild: Downgrade ```setuptools```  to 58.0 temporarly
+## ❓ Having Issues?
+- parselmouth installation failed: temporarily downgrade `setuptools` to below 58.0
 
-## The other things
+## Other
 
 ### Future Directions
 
 ### Acknowledgements
 - [RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
-- [SoftVC VITS Singing Conversion](https://github.com/justinjohn0306/so-vits-svc-4.0/tree/4.0-v2)
+- [SoftVC VITS Voice Conversion](https://github.com/justinjohn0306/so-vits-svc-4.0/tree/4.0-v2)
 - [GPT-SoVITS-WebUI](https://github.com/RVC-Boss/GPT-SoVITS)
 - [RMVPE](https://github.com/Dream-High/RMVPE)
 - [Retrieval-based-Voice-Conversion-WebUI](https://github.com/RVC-Project/Retrieval-based-Voice-Conversion-WebUI)
@@ -141,4 +131,4 @@ rwkv-language-test
 - [DeepSpeech](https://github.com/mozilla/DeepSpeech)
 - [Mozilla Common Voice](https://commonvoice.mozilla.org/zh-CN)
 - [CelebV-Text](https://github.com/celebv-text/CelebV-Text)
-- Radeon Pro w7900 provided by [AMD](https://amd.com) 
+- Compute cards from [AMD](https://amd.com)
