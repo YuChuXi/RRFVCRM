@@ -17,6 +17,14 @@ if importlib.util.find_spec('deepspeed'):
 
 # from deepspeed.runtime.fp16.onebit.zoadam import ZeroOneAdam
 
+os.environ["RWKV_JIT_ON"] = '1'
+os.environ["RWKV_CUDA_ON"] = '1'
+os.environ["RWKV_MY_TESTING"] = "x060"
+os.environ["RWKV_HEAD_SIZE_A"] = "128"
+os.environ["RWKV_TRAIN_TYPE"] = "states"
+
+os.environ["RWKV_MY_TESTING"] = "4096"
+
 try:
     print('RWKV_MY_TESTING', os.environ["RWKV_MY_TESTING"])
 except:
@@ -97,7 +105,7 @@ if 'x060' in os.environ["RWKV_MY_TESTING"]:
             return WKV_6STATE.apply(B, T, C, H, r, k, v, w, u, s)
     else:
         load(name="wkv6", sources=["cuda/wkv6_op.cpp", f"cuda/wkv6_cuda.cu"], is_python_module=False,
-                        verbose=True, extra_cuda_cflags=["-res-usage", "--use_fast_math", "-O3", "-Xptxas -O3", "--extra-device-vectorization", f"-D_N_={HEAD_SIZE}", f"-D_T_={int(os.environ['RWKV_CTXLEN'])}"])
+                        verbose=True, extra_cuda_cflags=[f"-D_N_={HEAD_SIZE}", f"-D_T_={int(os.environ['RWKV_CTXLEN'])}"])
             
         class WKV_6(torch.autograd.Function):
             @staticmethod
@@ -149,7 +157,7 @@ if 'x060' in os.environ["RWKV_MY_TESTING"]:
 
 elif 'x052' in os.environ["RWKV_MY_TESTING"]:
     wkv5_cuda = load(name="wkv5", sources=["cuda/wkv5_op.cpp", f"cuda/wkv5_cuda.cu"],
-                    verbose=True, extra_cuda_cflags=["-res-usage", "--use_fast_math", "-O3", "-Xptxas -O3", "--extra-device-vectorization", f"-D_N_={HEAD_SIZE}"])
+                    verbose=True, extra_cuda_cflags=[f"-D_N_={HEAD_SIZE}"])
         
     class WKV_5(torch.autograd.Function):
         @staticmethod

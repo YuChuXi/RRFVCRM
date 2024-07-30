@@ -1,14 +1,10 @@
 import os
-from rwkv6.src.model import RWKV
 import gc
 import torch
 import torch.nn.functional as F
 from pynvml import *
 from rwkv.utils import PIPELINE, PIPELINE_ARGS   
-
-#os.environ["RWKV_JIT_ON"] = '0'
-os.environ["RWKV_CUDA_ON"] = '1'
-os.environ["RWKV_MY_TESTING"] = "x060"
+from rwkv.model import RWKV
 
 #判断设备#
 if torch.cuda.is_available():

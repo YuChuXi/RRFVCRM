@@ -1,14 +1,11 @@
 import os
-from .src import RWKV 
+from .src import *
 import gc
 import torch
 import torch.nn.functional as F
 from pynvml import *
-from rwkv.utils import PIPELINE, PIPELINE_ARGS    
-
-#os.environ["RWKV_JIT_ON"] = '0'
-os.environ["RWKV_CUDA_ON"] = '1'
-os.environ["RWKV_MY_TESTING"] = "x060"
+from rwkv.utils import PIPELINE, PIPELINE_ARGS
+from rwkv.model import RWKV
 
 model_path = "/media/alic-li/WDdata03/RWKV-model/RWKV-x060-World-3B-v2-20240228-ctx4096.pth" ##模型路径(可修改)
 model = RWKV(model=model_path, strategy='cuda fp16')  ##调整策略
