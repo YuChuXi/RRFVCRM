@@ -39,8 +39,13 @@ sudo usermod -aG video $USERNAME
 cd ~/.local/lib/python3.10/site-packages/rwkv
 vim ./model.py
 ```
-#### Revise line 37，line 46，line 472，line 505```extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip", "--hip-link"]```to```"-O3", "--hipstdpar", "-xhip"```
-#### Global Search```os.environ["RWKV_CUDA_ON"] = '0'```Revise to```os.environ["RWKV_CUDA_ON"] = '1'```
+- Revise line 37，line 46，line 472，line 505
+```extra_cuda_cflags=["--use_fast_math", "-O3", "--extra-device-vectorization"]```
+to
+```extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip"]```
+- Global Search```os.environ["RWKV_CUDA_ON"] = '0'```
+Revise to
+```os.environ["RWKV_CUDA_ON"] = '1'```
 ```sh
 python webui.py
 ```

@@ -31,14 +31,16 @@ export HSA_OVERRIDE_GFX_VERSION=11.0.0
 sudo usermod -aG render $USERNAME 
 sudo usermod -aG video $USERNAME 
 ```
-#### 如果你是AMD用户，想要加上cuda算子并行化，那有点麻烦了，需要改rwkv标准库，还不一定跑得起来
+#### 如果你是 AMD 用户，想要加上cuda算子并行化，那有点麻烦了，需要改rwkv标准库，还不一定跑得起来
 #### 真的要跑？好吧~~~
 ```sh
 cd ~/.local/lib/python3.10/site-packages/rwkv
 vim ./model.py
 ```
-#### 修改37行，46行，472行，505行```extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip", "--hip-link"]```改为```"-O3", "--hipstdpar", "-xhip"```
-#### 全局搜索```os.environ["RWKV_CUDA_ON"] = '0'```改为```os.environ["RWKV_CUDA_ON"] = '1'```
+- 修改37行，46行，472行，505行```extra_cuda_cflags=["--use_fast_math", "-O3", "--extra-device-vectorization"]```
+改为
+```extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip"]```
+- 全局搜索```os.environ["RWKV_CUDA_ON"] = '0'```改为```os.environ["RWKV_CUDA_ON"] = '1'```
 ```sh
 python webui.py
 ```
