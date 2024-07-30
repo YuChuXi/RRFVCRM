@@ -1,6 +1,6 @@
 import gradio as gr
-from models.src.continuation import evaluate
-from models.src.dialogue import chat
+from models.rwkv6.continuation import evaluate
+from models.rwkv6.dialogue import chat
 
 title_0 = "RRFVCRM"
 title_1 = "Thanks for doctor Bo Peng created the RWKV model!"
