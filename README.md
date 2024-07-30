@@ -1,6 +1,8 @@
 # ![RRFVCM](assets/RRVtuber.png) Welcome to RRVtuber
 ![Language](https://img.shields.io/badge/language-python-brightgreen) ![Documentation](https://img.shields.io/badge/documentation-yes-brightgreen)
 
+[中文文档](./README-ch.md)
+
 ## Introduction
 An AI for generating voice and actions based on the RWKV model architecture
 
