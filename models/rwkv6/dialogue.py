@@ -6,6 +6,9 @@ from pynvml import *
 from rwkv.utils import PIPELINE, PIPELINE_ARGS   
 from rwkv.model import RWKV
 
+os.environ["RWKV_JIT_ON"] = '1'
+os.environ["RWKV_CUDA_ON"] = '0'
+
 #判断设备#
 if torch.cuda.is_available():
     device = torch.device("cuda") #调用hip设备(其实写cuda就是hip)
@@ -13,11 +16,11 @@ if torch.cuda.is_available():
 else: 
     device = torch.device("cpu")
 
-model_path = "/media/alic-li/WDdata03/RWKV-model/RWKV-v4-14b" ##模型路径(可修改)
-model = RWKV(model=model_path, strategy='cuda fp16')  ##调整策略
+model_path = "weights/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth" ##模型路径(可修改)
+model = RWKV(model=model_path, strategy='cuda bf16')  ##调整策略
 pipeline = PIPELINE(model, "rwkv_vocab_v20230424")  ##模型词库
 ctx_limit = 35000
-
+penalty_decay = 0.996
 ################################################dialogue######################################################
 model_state = None
 Assistant = "Molice"
@@ -29,69 +32,46 @@ msg = ""
 out_str = ""
 
 def chat(
-    user_name,
     ctx,
     token_count,
-    temperature,
-    top_p,
-    presencePenalty,
-    countPenalty,
+    temperature=1.0,
+    top_p=0.3,
+    presencePenalty=0.3,
+    countPenalty=0.3,
 ):
-    global model_state, Assistant, occurrence, answer, msg, out_last, out_str, out_tokens
-    if user_name == None:
-        user_name = "Bob"
-
-    if msg != "" :
-        pass
-    #elif os.path.exists("./model-data/" + user_name + ".txt"):      ##启用历史聊天记录分析
-        #msg = open("./model-data/" + user_name + ".txt").read()
-    elif os.path.exists("./model-data/" + user_name + ".txt"):
-        msg = ""
-    else:
-        msg = open("./model-data/" + user_name + ".txt")   ##新建聊天记录
-        msg =""  ##清空当前聊天记录
-    
-    msg += user_name + ": " + ctx + "\n\n" + Assistant + ": "
-    
-    if os.path.exists("./model-data/" + user_name + ".pth"):   #加载历史状态
-        model_state = torch.load("./model-data/" + user_name + ".pth", map_location=device)
-    else:
-        model_state = None              ##新建状态
-    
-    tokens = pipeline.encode(msg)
-    out, model_state = model.forward(tokens, model_state)
-    
     args = PIPELINE_ARGS(temperature = max(0.2, float(temperature)), top_p = float(top_p),
                      alpha_frequency = countPenalty,
                      alpha_presence = presencePenalty,
                      token_ban = [], # ban the generation of some tokens
                      token_stop = [0]) # stop generation whenever you see any token here
-    
+    all_tokens = []
+    out_last = 0
+    out_str = ''
+    occurrence = {}
+    state = model_state
     for i in range(int(token_count)):
+        out, state = model.forward(pipeline.encode(ctx)[-ctx_limit:] if i == 0 else [token], state)
         for n in occurrence:
-            out[n] -= args.alpha_presence + occurrence[n] * args.alpha_frequency # repetition penalty
-        out[0] -= 1e10  # disable END_OF_TEXT
-        
-        token = pipeline.sample_logits(out, temperature, top_p)
-        
-        for xxx in occurrence:
-            occurrence[xxx] *= 0.99
-        occurrence[token] = 1 + (occurrence[token] if token in occurrence else 0)
-        out, model_state = model.forward([token], model_state)
-        out_tokens += [token]
-        answer += pipeline.decode([token])
-        if "\n\n" in answer:
-            yield answer.strip()
+            out[n] -= (args.alpha_presence + occurrence[n] * args.alpha_frequency)
+
+        token = pipeline.sample_logits(out, temperature=args.temperature, top_p=args.top_p)
+        if token in args.token_stop:
             break
-    if "\n\n" in answer:
-            yield answer.strip()
-    msg += answer
-    text =  user_name + ": " + ctx + "\n\n" + Assistant + ": " + answer
-    text_file = open("./model-data/" + user_name + ".txt", "a")
-    text_file.write(text)
-    torch.save(model_state,"./model-data/" + user_name + ".pth")
-    answer = ""
-    model_state = None
-    gc.collect()    
-    torch.cuda.empty_cache()   
-    return user_name, model_state, msg
+        all_tokens += [token]
+        for xxx in occurrence:
+            occurrence[xxx] *= penalty_decay
+        if token not in occurrence:
+            occurrence[token] = 1
+        else:
+            occurrence[token] += 1
+        
+        tmp = pipeline.decode(all_tokens[out_last:])
+        if '\ufffd' not in tmp:
+            out_str += tmp
+            yield out_str.strip()
+            out_last = i + 1
+    del out
+    del state
+    gc.collect()
+    torch.cuda.empty_cache()
+    yield out_str.strip()

@@ -20,8 +20,8 @@ with gr.Blocks(title=title_0) as demo:
                 token_count = gr.Slider(10, 10000, label="Max Tokens", step=10, value=333)
                 temperature = gr.Slider(0.2, 3.0, label="Temperature", step=0.1, value=1.0)
                 top_p = gr.Slider(0.0, 1.0, label="Top P", step=0.05, value=0.3)
-                presence_penalty = gr.Slider(0.0, 1.0, label="Presence Penalty", step=0.1, value=0)
-                count_penalty = gr.Slider(0.0, 1.0, label="Count Penalty", step=0.1, value=1)
+                presence_penalty = gr.Slider(0.0, 1.0, label="Presence Penalty", step=0.1, value=0.3)
+                count_penalty = gr.Slider(0.0, 1.0, label="Count Penalty", step=0.1, value=0.3)
             with gr.Column():
                 with gr.Row():
                     submit = gr.Button("Submit", variant="primary")
@@ -124,5 +124,6 @@ with gr.Blocks(title=title_0) as demo:
         gr.Markdown(f"[Mozilla Common Voice](https://commonvoice.mozilla.org/zh-CN)")
         gr.Markdown(f"[CelebV-Text](https://github.com/celebv-text/CelebV-Text)")
         gr.Markdown(f"Radeon Pro w7900 provided by [AMD](https://amd.com) ")
-        
+
+demo.queue()       
 demo.launch(server_name="127.0.0.1", server_port=8080, show_error=True, share=False)

@@ -1,5 +1,4 @@
 import os
-from .src import *
 import gc
 import torch
 import torch.nn.functional as F
@@ -7,10 +6,8 @@ from pynvml import *
 from rwkv.utils import PIPELINE, PIPELINE_ARGS
 from rwkv.model import RWKV
 
-model_path = "/media/alic-li/WDdata03/RWKV-model/RWKV-x060-World-3B-v2-20240228-ctx4096.pth" ##模型路径(可修改)
-model = RWKV(model=model_path, strategy='cuda fp16')  ##调整策略
-pipeline = PIPELINE(model, "rwkv_vocab_v20230424")  ##模型词库
-ctx_limit = 35000
+os.environ["RWKV_JIT_ON"] = '1'
+os.environ["RWKV_CUDA_ON"] = '0'
 
 #判断设备#
 if torch.cuda.is_available():
@@ -18,6 +15,11 @@ if torch.cuda.is_available():
     print("device :hip or cuda")
 else: 
     device = torch.device("cpu")
+
+model_path = "weights/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth" ##模型路径(可修改)
+model = RWKV(model=model_path, strategy='cuda bf16')  ##调整策略
+pipeline = PIPELINE(model, "rwkv_vocab_v20230424")  ##模型词库
+ctx_limit = 35000
 
 ########################## text rwkv ################################################################
 def evaluate(
