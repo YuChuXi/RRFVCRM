@@ -6,7 +6,7 @@ import torch.nn.functional as F
 from pynvml import *
 from rwkv.utils import PIPELINE, PIPELINE_ARGS    
 
-os.environ["RWKV_JIT_ON"] = '0'
+#os.environ["RWKV_JIT_ON"] = '0'
 os.environ["RWKV_CUDA_ON"] = '1'
 os.environ["RWKV_MY_TESTING"] = "x060"
 

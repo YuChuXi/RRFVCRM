@@ -6,6 +6,10 @@ import torch.nn.functional as F
 from pynvml import *
 from rwkv.utils import PIPELINE, PIPELINE_ARGS   
 
+#os.environ["RWKV_JIT_ON"] = '0'
+os.environ["RWKV_CUDA_ON"] = '1'
+os.environ["RWKV_MY_TESTING"] = "x060"
+
 #判断设备#
 if torch.cuda.is_available():
     device = torch.device("cuda") #调用hip设备(其实写cuda就是hip)
