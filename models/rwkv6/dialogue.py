@@ -16,7 +16,7 @@ else:
 model_path = "/media/alic-li/WDdata03/RWKV-model/RWKV-v4-14b" ##模型路径(可修改)
 model = RWKV(model=model_path, strategy='cuda fp16')  ##调整策略
 pipeline = PIPELINE(model, "rwkv_vocab_v20230424")  ##模型词库
-ctx_limit = 3500000000
+ctx_limit = 35000
 
 ################################################dialogue######################################################
 model_state = None

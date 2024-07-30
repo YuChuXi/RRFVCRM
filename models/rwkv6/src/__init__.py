@@ -1,1 +1,1 @@
-from rwkv6.src.model import RWKV
+from .model import RWKV

@@ -1,5 +1,5 @@
 import os
-from rwkv6.src.model import RWKV
+from src import RWKV 
 import gc
 import torch
 import torch.nn.functional as F
