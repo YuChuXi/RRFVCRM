@@ -1,6 +1,6 @@
 import gradio as gr
-
-
+from models.src.continuation import evaluate
+from models.src.dialogue import chat
 
 title_0 = "RRFVCRM"
 title_1 = "Thanks for doctor Bo Peng created the RWKV model!"
@@ -28,7 +28,7 @@ with gr.Blocks(title=title_0) as demo:
                     clear = gr.Button("Clear", variant="secondary")            
                 output = gr.Textbox(label="Text Output", lines=12)
                 voice_output = gr.Audio(value = None , format = "wave" , label = "Voice Output" )
-        #submit.click(evaluate, [prompt, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
+        submit.click(chat, [prompt, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
         clear.click(lambda: None, [], [output])
     
     
@@ -46,7 +46,7 @@ with gr.Blocks(title=title_0) as demo:
                     submit = gr.Button("Submit", variant="primary")
                     clear = gr.Button("Clear", variant="secondary")
                 output = gr.Textbox(label="Output", lines=25)
-        #submit.click(evaluate, [prompt, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
+        submit.click(evaluate, [prompt, token_count, temperature, top_p, presence_penalty, count_penalty], [output])
         clear.click(lambda: None, [], [output])
     
     
