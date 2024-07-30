@@ -1,5 +1,6 @@
 rwkv
-numpy>=1.24.3
+gradio
+numpy>=1.26.4
 icecream
 Flask
 tqdm

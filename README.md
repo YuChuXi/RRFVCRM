@@ -54,8 +54,8 @@ python webui.py
 ##### If you falid ? Change back the ```os.environ["RWKV_CUDA_ON"] = '1'```to```os.environ["RWKV_CUDA_ON"] = '0'```
 ##### It still runs after changing it back. It's still work, but it lacks elegant parallelization. I don't take the blame for this. This is caused by the ROCm software ecosystem's compatibility. It's good enough that Pytorch can run it.
 ### Download pre-trained weights
-Put pre-trained weights in ```weigths/pretrained/```
-Put rwkv1b6 Language model(RWKV-LM) in ```./models/rwkv/rwkv-lm-models```
+Put pre-trained weights in ```./weigths/```
+Put rwkv1b6 Language model(RWKV-LM) in ```./weights/```
 - RWKV-LM [RWKV-x060-World-1B6-v2-20240208-ctx4096.pth](https://huggingface.co/BlinkDL/rwkv-6-world/blob/main/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth)
 - Bert [s1bert.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt)
 - HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
@@ -73,12 +73,12 @@ python  models/language_test.py
 ```
 (If the interaction is normal, it means the preparation is correct.)
 
-## Qiuvk Start (It is not Available now!)
+## Qiuck Start (It is not Available now!)
 - Install the model [None](https://nothing)
 - Install  the VC model [None](https://nothing)
 - Launching！
 
-## Qiuvk Start Language model（It is Available now!）
+## Qiuck Start Language model（It is Available now!）
 ```sh
 python webui.py
 ```
