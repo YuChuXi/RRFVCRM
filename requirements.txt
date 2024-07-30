@@ -3,10 +3,9 @@ numpy>=1.24.3
 icecream
 Flask
 tqdm
-cv2
-math
+opencv-python
+python-math
 scipy
 mediapipe
-copy
 librosa
 ninja
