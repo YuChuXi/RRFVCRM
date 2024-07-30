@@ -14,7 +14,7 @@ from rwkv.model import RWKV
 from rwkv.utils import PIPELINE
 
 # MODEL_FILE = '/fsx/BlinkDL/HF-MODEL/rwkv-4-music/RWKV-4-MIDI-120M-v1-20230714-ctx4096' # MIDI model
-MODEL_FILE = '/media/alic-li/WDdata03/RWKV-model/RWKV-5-MIDI-560M-v1-20230902-ctx4096.pth' # ABC model (see https://abc.rectanglered.com)
+MODEL_FILE = 'weights/RWKV-5-MIDI-560M-v1-20230902-ctx4096.pth' # ABC model (see https://abc.rectanglered.com)
 
 ABC_MODE = ('-ABC-' in MODEL_FILE)
 MIDI_MODE = ('-MIDI-' in MODEL_FILE)

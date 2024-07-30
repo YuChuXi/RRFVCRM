@@ -33,6 +33,21 @@ process
 sudo usermod -aG render $USERNAME 
 sudo usermod -aG video $USERNAME 
 ```
+#### If you are an AMD user and want to add cuda operator parallelization, it will be a bit trouble. You need to modify the rwkv standard library, and it may not work.
+#### Really want to RUN？ Well ~~~
+```sh
+cd ~/.local/lib/python3.10/site-packages/rwkv
+vim ./model.py
+```
+#### Revise line 37，line 46，line 472，line 505```extra_cuda_cflags=["-O3", "--hipstdpar", "-xhip", "--hip-link"]```to```"-O3", "--hipstdpar", "-xhip"```
+#### Global Search```os.environ["RWKV_CUDA_ON"] = '0'```Revise to```os.environ["RWKV_CUDA_ON"] = '1'```
+```sh
+python webui.py
+```
+#### I sencerly wish you could be success!
+##### You could find ```~/.local/lib/python3.10/site-packages/rwkv```A "hip" directory will appear，That is the converted CUDA operator.
+##### If you falid ? Change back the ```os.environ["RWKV_CUDA_ON"] = '1'```to```os.environ["RWKV_CUDA_ON"] = '0'```
+##### It still runs after changing it back. It's still work, but it lacks elegant parallelization. I don't take the blame for this. This is caused by the ROCm software ecosystem's compatibility. It's good enough that Pytorch can run it.
 ### Download pre-trained weights
 Put pre-trained weights in ```weigths/pretrained/```
 Put rwkv1b6 Language model(RWKV-LM) in ```./models/rwkv/rwkv-lm-models```
@@ -41,6 +56,11 @@ Put rwkv1b6 Language model(RWKV-LM) in ```./models/rwkv/rwkv-lm-models```
 - HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
 
+### change the model weight path
+- ```./models/rwkv6/dialogue.py``` line 19
+- ```./models/rwkv6/continuation.py```line 19
+- ```./models/music/run.py```line 17
+- ```./models/language_test.py```line 11
 ### Inspect
 - process 
 ```sh
@@ -57,7 +77,7 @@ python  models/language_test.py
 ```sh
 python webui.py
 ```
-
+Alic is a noob in the DeepLearning ，but it's could be running
 # Project Structure
 
 ## Trianing
@@ -75,9 +95,9 @@ You can prepare the data yourself or refer to the following datasets:
 - Extract facial features from video征 ```python ```
 
 ### Trianing T2F0
-
+- Wait for YuChuXi, She is a lazy little fox
 ### Trianing TF02M
-
+- Wait for YuChuXi, She is a lazy little fox
 # Expand
 Try rwkv-music-demo
 --

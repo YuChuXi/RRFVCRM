@@ -75,7 +75,7 @@ def chat(
         if "\n\n" in tmp :
             break
     del out
-    del state
     gc.collect()
     torch.cuda.empty_cache()
     yield out_str.strip()
+    
