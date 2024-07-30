@@ -24,6 +24,7 @@ penalty_decay = 0.996
 ################################################dialogue######################################################
 model_state = None
 Assistant = "Molice"
+user_name = "user"
 out_last = 0
 occurrence = {}
 out_tokens = []
@@ -49,6 +50,7 @@ def chat(
     out_str = ''
     occurrence = {}
     state = model_state
+    ctx += user_name + ": " + ctx + "\n\n" + Assistant + ": "
     for i in range(int(token_count)):
         out, state = model.forward(pipeline.encode(ctx)[-ctx_limit:] if i == 0 else [token], state)
         for n in occurrence:
