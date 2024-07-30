@@ -79,6 +79,7 @@ python  models/language_test.py
 ```sh
 python webui.py
 ```
+#### 调整模型运行策略在 ```models/rwkv6/dialogue.py``` 第19行，默认 "cuda fp16"
 Alic这只北极熊比较菜，至少能跑
 # 项目结构
 
