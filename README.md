@@ -1,17 +1,16 @@
 #
 ![RRFVCM](assets/logo.jpg)
 
-#
-RRFVCM
+# RRFVCM
 
 ###
 [中文文档](./README-ch.md)
 
-## Preface
+# Preface
 RWKV RNN LLM speech motion and action generater
-### Original Intention
+## Original Intention
 A speech motion and action generation AI based on the RWKV model architecture
-### Convention
+## Convention
 - Unless otherwise specified, the instructions in the document are executed in the project root directory.
 - ```python``` = ```python3```  if not process```sudo apt install python-is-python3```
 ## Preparation
@@ -49,14 +48,17 @@ python  models/language_test.py
 ```
 (If the interaction is normal, it means the preparation is correct.)
 
-## Qiuvk Start
+## Qiuvk Start (It is not Available now!)
 - Install the model [None](https://nothing)
 - Install  the VC model [None](https://nothing)
-- Launching！ 
+- Launching！
+
+## Qiuvk Start Language model（It is Available now!）
 ```sh
 python webui.py
 ```
-## Project Structure
+
+# Project Structure
 
 ## Trianing
 - In the trianing processing [google-mediapipe](https://github.com/emilianavt/OpenSeeFace/releases) Extract facial features，configure the path in ```config/openseeface.json``` 

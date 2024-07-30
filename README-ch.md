@@ -1,9 +1,9 @@
 #
 ![RRFVCM](assets/logo.jpg)
 
+# RRFVCM
 
-
-## 前言
+# 前言
 一个以 RWKV 模型架构为基础的语音、动作生成AI
 ### 初衷
 
@@ -46,16 +46,18 @@ python  models/language_test.py
 ``` 
 - 若可正常交互则说明准备工作无误
 
-## 快速开始
+## 快速开始 (It is not Available now!)(现在还未完善)
 - 下载示例模型 [啥都没有](https://nothing)
 - 下载训练有素的VC模型 [啥都没有](https://nothing)
 - 启动！
 
+
+## 快速运行语言模型 （It is Available now!）(现在可以运行)
 ```sh
 python webui.py
 ```
 
-## 项目结构
+# 项目结构
 
 ## 训练
 - 训练需要 [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace/releases) 提取人脸特征，完成安装后在 ```config/openseeface.json``` 中配置路径即可
