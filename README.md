@@ -72,7 +72,7 @@ python models/language_test.py
 python webui.py
 ```
 #### Adjust the model running strategy in line 19 of `models/rwkv6/dialogue.py`, default "cuda fp16"
-Alic the polar bear is not very strong, at least can run
+Alic is a noob in the DeepLearning ，but it's could be running
 
 ## 📂 Project Structure
 
@@ -91,10 +91,9 @@ You can prepare the data yourself or refer to the following datasets
 - Extract facial features from video `python`
 
 ### 🎶 Train T2F0
-- Wait for YuChuXi, the lazy fox
-
+- Wait for YuChuXi,She is a lazy little fox
 ### 🎶 Train TF02M
-- Wait for YuChuXi, the lazy fox
+- Wait for YuChuXi,She is a lazy little fox
 
 ## 🌟 Extensions
 Try rwkv-music-demo
