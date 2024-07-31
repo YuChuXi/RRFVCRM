@@ -55,7 +55,10 @@ python webui.py
 - Bert [s1bert.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt)
 - HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
-
+#### 如果显存够大可以尝试更大的预训练权重模型
+- [RWKV-LM] (https://huggingface.co/BlinkDL/rwkv-6-world/tree/main/)
+- [Visaul-RWKV] (https://huggingface.co/howard-hou/visualrwkv-5/tree/main/)
+- [RWKV-music] (https://huggingface.co/BlinkDL/rwkv-5-music/tree/main)
 ### 📝 修改预训练权重路径
 - `./models/rwkv6/dialogue.py` 第 19 行
 - `./models/rwkv6/continuation.py` 第 19 行
