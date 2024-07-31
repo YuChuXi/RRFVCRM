@@ -126,6 +126,11 @@ rwkv-language-test
 - 运行 `python language_test.py`
 
 ## ❓ 遇到问题?
+- 如果无法启动webui，绝大多数可能是命令行终端无法连接Huggingface网站，请尝试使用代理，并在命令行终端中设置代理
+```sh
+export https_proxy=http://127.0.0.1:[port]
+export http_proxy=http://127.0.0.1:[port]
+```
 - parselmouth 安装失败: 暂时将 `setuptools` 降级至 58.0 以下
 
 ## 其他

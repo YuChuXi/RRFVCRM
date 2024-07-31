@@ -124,6 +124,11 @@ rwkv-language-test
 - Run `python language_test.py`
 
 ## ❓ Having Issues?
+- If yuo can can't run ```webui.py```In most cases, the command line terminal may not be able to connect to the Huggingface website. Please try using a proxy and set the proxy in the command line terminal.
+```sh
+export https_proxy=http://127.0.0.1:[port]
+export http_proxy=http://127.0.0.1:[port]
+```
 - parselmouth installation failed: temporarily downgrade `setuptools` to below 58.0
 
 ## Other
