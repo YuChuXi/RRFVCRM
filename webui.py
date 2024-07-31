@@ -71,7 +71,7 @@ with gr.Blocks(title=title_0) as demo:
         submit.click(chatbot_v, [image, prompt], [output])
         clear.click(lambda: None, [], [output])
         data.click(lambda x: x, [data], [image, prompt])
-        gr.Markdown(f"The original code is from <howard-hou>")
+        gr.Markdown(f"The original code is from howard-hou")
         gr.Markdown(f"Transplant From Nvidia cuda platform")
         gr.Markdown(f"https://github.com/howard-hou/VisualRWKV")
     
