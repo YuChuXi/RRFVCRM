@@ -4,9 +4,10 @@
 [中文文档](./README-ch.md)
 
 ## Introduction
-An AI for generating voice and actions based on the RWKV model architecture
+An AI with Visual for generating voice and actions based on the RWKV model architecture
 
-### Motivation
+### Project Prospects
+- This project can be flexibly applied to various local deployments of AI virtual anchors or physical robots, which has the characteristics of saving computing power and power consumption in the future. This AI project has the functions of visual emotion expression and action generation, and is currently in the process of improving various functions.And it also already have the Visual.
 
 ### Conventions
 - Commands in the documentation are to be executed in the project's root directory unless otherwise specified
