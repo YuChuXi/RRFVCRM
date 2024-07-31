@@ -44,40 +44,35 @@ def chat(
                      alpha_presence = presencePenalty,
                      token_ban = [], # ban the generation of some tokens
                      token_stop = [0]) # stop generation whenever you see any token here
-    all_tokens = []
-    out_last = 0
-    out_str = ''
-    occurrence = {}
-    state = model_state
-    ctx += user_name + ": " + ctx + "\n\n" + Assistant + ": "
-    for i in range(int(token_count)):
-        out, state = model.forward(pipeline.encode(ctx)[-ctx_limit:] if i == 0 else [token], state)
-        for n in occurrence:
-            out[n] -= (args.alpha_presence + occurrence[n] * args.alpha_frequency)
-
-        token = pipeline.sample_logits(out, temperature=args.temperature, top_p=args.top_p)
-        if token in args.token_stop:
-            break
-        all_tokens += [token]
-        for xxx in occurrence:
-            occurrence[xxx] *= penalty_decay
-        if token not in occurrence:
-            occurrence[token] = 1
-        else:
-            occurrence[token] += 1
-        
-        tmp = pipeline.decode(all_tokens[out_last:])
-        if '\ufffd' not in tmp:
-            out_str += tmp
-            yield out_str.strip()
-            out_last = i + 1
-        if "\n\n" in tmp :
-            break
-    del out
-    gc.collect()
-    torch.cuda.empty_cache()
-    yield out_str.strip()
     
+    global msg, model_state, Assistant, user_name, answer, out_str, out_tokens, out_str, occurrence
+   
+    msg += user_name + ": " + ctx + "\n\n" + Assistant + ": "
+    
+    tokens = pipeline.encode(msg)
+    out, model_state = model.forward(tokens, model_state)
+
+    for i in range(int(token_count)):
+        for n in occurrence:
+            out[n] -= args.alpha_presence + occurrence[n] * args.alpha_frequency # repetition penalty
+        out[0] -= 1e10  # disable END_OF_TEXT
+        
+        token = pipeline.sample_logits(out, temperature, top_p)
+        
+        for xxx in occurrence:
+            occurrence[xxx] *= 0.99
+        occurrence[token] = 1 + (occurrence[token] if token in occurrence else 0)
+        out, model_state = model.forward([token], model_state)
+        out_tokens += [token]
+        answer += pipeline.decode([token])
+        if "\n\n" in answer:
+            yield answer.strip()
+            break
+    gc.collect()    
+    torch.cuda.empty_cache()
+    msg = "" 
+    answer = ""  
+    return user_name, model_state, msg
 ########################## text rwkv ################################################################
 def evaluate(
     ctx,
