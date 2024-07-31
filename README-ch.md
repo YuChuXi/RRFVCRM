@@ -9,7 +9,7 @@
 - 文档中的指令均位于项目根目录执行，除非特别说明
 - `python` 和 `python3` 是一样的
 
-## 🛠 准备工作
+# 🛠 准备工作
 
 ### 配置环境
 1. 安装 [Python](https://python.org)
@@ -50,6 +50,8 @@ python webui.py
 ### 📥 下载预训练权重
 预训练权重存放于 `./weights/`
 - RWKV-LM [RWKV-x060-World-1B6-v2-20240208-ctx4096.pth](https://huggingface.co/BlinkDL/rwkv-6-world/blob/main/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth)
+- Visaul-RWKV-LM [rwkv1b5-vitl336p14-577token_mix665k_rwkv.pth](https://huggingface.co/howard-hou/visualrwkv-5/blob/main/rwkv1b5-vitl336p14-577token_mix665k_rwkv.pth)
+- Visaul-RWKV [rwkv1b5-vitl336p14-577token_mix665k_visual.pth](https://huggingface.co/howard-hou/visualrwkv-5/blob/main/rwkv1b5-vitl336p14-577token_mix665k_visual.pth)
 - Bert [s1bert.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt)
 - HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
@@ -59,8 +61,8 @@ python webui.py
 - `./models/rwkv6/continuation.py` 第 19 行
 - `./models/music/run.py` 第 17 行
 - `./models/language_test.py` 第 11 行
-
-### 🧪 检验
+- `./models/visualRWKV/app/app_gpu.py`第 19 行 和 第 20 行
+# 🧪 检验
 - 执行
 ```sh 
 python models/language_test.py
@@ -69,11 +71,16 @@ python models/language_test.py
 
 
 
-## 🚀 快速运行语言模型 （It is Available now!）(现在可以运行)
+# 🚀 快速运行语言模型 （It is Available now!）(现在可以运行)
 ```sh
 python webui.py
 ```
-#### 调整模型运行策略在 `models/rwkv6/dialogue.py` 第 19 行，默认 "cuda fp16"
+# 👀 快速运行RWKV视觉模型 （It is Available now!）(现在可以运行)
+```sh
+python webui.py
+```
+#### 调整语言模型运行策略在 `models/rwkv6/dialogue.py` 第 19 行，默认 "cuda fp16"
+#### 调整视觉模型运行策略在 `models/visualRWKV/app/app_gpu.py` 第 24 行，默认 "cuda fp16"
 Alic 这只北极熊比较菜，至少能跑
 
 ## 📂 项目结构
@@ -127,6 +134,7 @@ rwkv-language-test
 
 ### 致谢
 - [RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
+- [Visual-RWKV](https://github.com/howard-hou/VisualRWKV)
 - [SoftVC VITS 歌声转换](https://github.com/justinjohn0306/so-vits-svc-4.0/tree/4.0-v2)
 - [GPT-SoVITS-WebUI](https://github.com/RVC-Boss/GPT-SoVITS)
 - [RMVPE](https://github.com/Dream-High/RMVPE)

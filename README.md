@@ -12,7 +12,7 @@ An AI for generating voice and actions based on the RWKV model architecture
 - Commands in the documentation are to be executed in the project's root directory unless otherwise specified
 - `python` and `python3` are the same
 
-## 🛠 Preparation
+# 🛠 Preparation
 
 ### Setting Up the Environment
 1. Install [Python](https://python.org)
@@ -51,6 +51,8 @@ python webui.py
 ### 📥 Download Pre-trained Weights
 Pre-trained weights are stored in `./weights/`
 - RWKV-LM [RWKV-x060-World-1B6-v2-20240208-ctx4096.pth](https://huggingface.co/BlinkDL/rwkv-6-world/blob/main/RWKV-x060-World-1B6-v2.1-20240328-ctx4096.pth)
+- Visaul-RWKV-LM [rwkv1b5-vitl336p14-577token_mix665k_rwkv.pth](https://huggingface.co/howard-hou/visualrwkv-5/blob/main/rwkv1b5-vitl336p14-577token_mix665k_rwkv.pth)
+- Visaul-RWKV [rwkv1b5-vitl336p14-577token_mix665k_visual.pth](https://huggingface.co/howard-hou/visualrwkv-5/blob/main/rwkv1b5-vitl336p14-577token_mix665k_visual.pth)
 - Bert [s1bert.ckpt](https://huggingface.co/lj1995/GPT-SoVITS/resolve/main/s1bert25hz-2kh-longer-epoch%3D68e-step%3D50232.ckpt)
 - HuBert [hubert_base.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/hubert_base.pt)
 - RMVPE [rmvpe.pt](https://huggingface.co/lj1995/VoiceConversionWebUI/resolve/main/rmvpe.pt)
@@ -60,19 +62,24 @@ Pre-trained weights are stored in `./weights/`
 - Line 19 in `./models/rwkv6/continuation.py`
 - Line 17 in `./models/music/run.py`
 - Line 11 in `./models/language_test.py`
-
-### 🧪 Verification
+- line 19 and line 20 in `./models/visualRWKV/app/app_gpu.py`
+# 🧪 Verification
 - Execute
 ```sh 
 python models/language_test.py
 ``` 
 - If it interacts normally, the preparation work is correct
 
-## 🚀 Quick Run Language Model (It is Available now!)
+# 🚀 Quick Run Language Model (It is Available now!)
+```sh
+python webui.py
+```
+# 👀  Quick Run Visual-RWKV Model （It is Available now!）
 ```sh
 python webui.py
 ```
 #### Adjust the model running strategy in line 19 of `models/rwkv6/dialogue.py`, default "cuda fp16"
+#### Adjust the Visual-RWKV model running strategy in line 24 of`models/visualRWKV/app/app_gpu.py` default "cuda fp16"
 Alic is a noob in the DeepLearning ，but it's could be running
 
 ## 📂 Project Structure
@@ -125,6 +132,7 @@ rwkv-language-test
 
 ### Acknowledgements
 - [RWKV-LM](https://github.com/BlinkDL/RWKV-LM)
+- [Visual-RWKV](https://github.com/howard-hou/VisualRWKV)
 - [SoftVC VITS Voice Conversion](https://github.com/justinjohn0306/so-vits-svc-4.0/tree/4.0-v2)
 - [GPT-SoVITS-WebUI](https://github.com/RVC-Boss/GPT-SoVITS)
 - [RMVPE](https://github.com/Dream-High/RMVPE)
