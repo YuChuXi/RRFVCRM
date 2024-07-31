@@ -1,5 +1,5 @@
 # RRVtuber
-# ![RRVtuber](assets/logo.jpg)
+# ![RRVtuber](assets/logo.png)
 ## 前言
 一个基于 RWKV 模型架构的语音、动作生成 AI
 
